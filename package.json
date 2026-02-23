@@ -18,5 +18,14 @@
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@paymoapp/active-window": "^2.1.2",
+    "get-windows": "^9.2.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@paymoapp/active-window"
+    ]
   }
 }

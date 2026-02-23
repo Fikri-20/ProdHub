@@ -1,0 +1,4 @@
+ignoredBuiltDependencies:
+  - '@paymoapp/active-window'
+  - active-windows
+  - get-windows
