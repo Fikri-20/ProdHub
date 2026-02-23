@@ -186,6 +186,16 @@ describe("Summary Routes", () => {
         expect(work.totalDuration).toBe(300);
         expect(browsing.totalDuration).toBe(120);
       });
+
+      it("should return empty array when no events match date range", async () => {
+        const res = await app.inject({
+          method: "GET",
+          url: "/api/summary?groupBy=category&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z",
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toHaveLength(0);
+      });
     });
   });
 });

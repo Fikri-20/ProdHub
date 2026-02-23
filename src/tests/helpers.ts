@@ -1,4 +1,9 @@
 import Fastify from "fastify";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  hasZodFastifySchemaValidationErrors,
+} from "fastify-type-provider-zod";
 import eventRoutes from "../routes/events.js";
 import categoryRoutes from "../routes/categories.js";
 import summaryRoutes from "../routes/summary.js";
@@ -9,6 +14,23 @@ import summaryRoutes from "../routes/summary.js";
  */
 export function buildApp() {
   const app = Fastify({ logger: false });
+
+  // Wire Zod type provider (must match server.ts)
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  // Custom error handler for Zod validation errors (must match server.ts)
+  app.setErrorHandler(function (error, _request, reply) {
+    if (hasZodFastifySchemaValidationErrors(error)) {
+      const firstIssue = error.validation[0]?.params?.issue;
+      const message = firstIssue?.message ?? "Validation error";
+      return reply.status(400).send({ error: message });
+    }
+
+    reply.status(error.statusCode ?? 500).send({
+      error: error.message,
+    });
+  });
 
   app.register(eventRoutes, { prefix: "/api/events" });
   app.register(categoryRoutes, { prefix: "/api/categories" });

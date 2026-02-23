@@ -1,10 +1,33 @@
 import Fastify from "fastify";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  hasZodFastifySchemaValidationErrors,
+} from "fastify-type-provider-zod";
 import prisma from "./lib/prisma.js";
 import eventRoutes from "./routes/events.js";
 import categoryRoutes from "./routes/categories.js";
 import summaryRoutes from "./routes/summary.js";
 
 const app = Fastify({ logger: true });
+
+// Wire Zod type provider
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
+// Custom error handler for Zod validation errors
+app.setErrorHandler(function (error, _request, reply) {
+  if (hasZodFastifySchemaValidationErrors(error)) {
+    const firstIssue = error.validation[0]?.params?.issue;
+    const message = firstIssue?.message ?? "Validation error";
+    return reply.status(400).send({ error: message });
+  }
+
+  // Default Fastify error handling
+  reply.status(error.statusCode ?? 500).send({
+    error: error.message,
+  });
+});
 
 // Register route plugins
 app.register(eventRoutes, { prefix: "/api/events" });

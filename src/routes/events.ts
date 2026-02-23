@@ -1,60 +1,32 @@
 import type { FastifyInstance } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import prisma from "../lib/prisma.js";
+import { heartbeatBodySchema, eventsQuerySchema } from "../schemas/events.js";
 
 const eventRoutes = async (app: FastifyInstance) => {
+  const typedApp = app.withTypeProvider<ZodTypeProvider>();
+
   // POST /api/events/heartbeat — ingest an activity event
-  app.post("/heartbeat", async (request, reply) => {
-    const body = request.body as Record<string, unknown> | null | undefined;
+  typedApp.post("/heartbeat", {
+    schema: { body: heartbeatBodySchema },
+  }, async (request, reply) => {
+    const { deviceName, os, appName, windowTitle, startTime, endTime, duration } = request.body;
 
-    if (!body || typeof body !== "object") {
-      return reply.status(400).send({ error: "Request body is required" });
-    }
-
-    const { deviceName, os, appName, windowTitle, startTime, endTime, duration } = body as Record<string, unknown>;
-
-    // Validate required string fields
-    const stringFields = { deviceName, os, appName, windowTitle } as Record<string, unknown>;
-    for (const [key, value] of Object.entries(stringFields)) {
-      if (typeof value !== "string" || value.trim().length === 0) {
-        return reply.status(400).send({ error: `${key} is required and must be a non-empty string` });
-      }
-    }
-
-    // Validate duration
-    if (typeof duration !== "number" || duration <= 0) {
-      return reply.status(400).send({ error: "duration is required and must be a positive number" });
-    }
-
-    // Validate dates
-    const start = new Date(startTime as string);
-    const end = new Date(endTime as string);
-
-    if (isNaN(start.getTime())) {
-      return reply.status(400).send({ error: "startTime must be a valid ISO date string" });
-    }
-    if (isNaN(end.getTime())) {
-      return reply.status(400).send({ error: "endTime must be a valid ISO date string" });
-    }
-
-    // Upsert device by (name, os)
-    let device = await prisma.device.findFirst({
-      where: { name: (deviceName as string).trim(), os: (os as string).trim() },
+    // Atomic upsert device by compound unique (name, os)
+    const device = await prisma.device.upsert({
+      where: { name_os: { name: deviceName, os } },
+      update: {},
+      create: { name: deviceName, os },
     });
-
-    if (!device) {
-      device = await prisma.device.create({
-        data: { name: (deviceName as string).trim(), os: (os as string).trim() },
-      });
-    }
 
     // Create the activity event
     const event = await prisma.activityEvent.create({
       data: {
         deviceId: device.id,
-        appName: (appName as string).trim(),
-        windowTitle: (windowTitle as string).trim(),
-        startTime: start,
-        endTime: end,
+        appName,
+        windowTitle,
+        startTime,
+        endTime,
         duration: Math.round(duration),
       },
       include: { device: true },
@@ -64,51 +36,34 @@ const eventRoutes = async (app: FastifyInstance) => {
   });
 
   // GET /api/events — query events with filters and pagination
-  app.get("/", async (request, reply) => {
-    const query = request.query as Record<string, string | undefined>;
+  typedApp.get("/", {
+    schema: { querystring: eventsQuerySchema },
+  }, async (request, reply) => {
+    const { from, to, limit, offset, appName } = request.query;
 
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // Parse date range
-    let from = twentyFourHoursAgo;
-    let to = now;
-
-    if (query.from) {
-      const parsed = new Date(query.from);
-      if (isNaN(parsed.getTime())) {
-        return reply.status(400).send({ error: "from must be a valid ISO date string" });
-      }
-      from = parsed;
-    }
-
-    if (query.to) {
-      const parsed = new Date(query.to);
-      if (isNaN(parsed.getTime())) {
-        return reply.status(400).send({ error: "to must be a valid ISO date string" });
-      }
-      to = parsed;
-    }
-
-    // Parse pagination
-    const limit = Math.min(Math.max(parseInt(query.limit ?? "100", 10) || 100, 1), 1000);
-    const offset = Math.max(parseInt(query.offset ?? "0", 10) || 0, 0);
+    const effectiveFrom = from ?? twentyFourHoursAgo;
+    const effectiveTo = to ?? now;
+    const effectiveLimit = Math.min(Math.max(limit ?? 100, 1), 1000);
+    const effectiveOffset = Math.max(offset ?? 0, 0);
 
     // Build where clause
     const where: Record<string, unknown> = {
-      startTime: { gte: from, lte: to },
+      startTime: { gte: effectiveFrom, lte: effectiveTo },
     };
 
-    if (query.appName) {
-      where.appName = query.appName;
+    if (appName) {
+      where.appName = appName;
     }
 
     const events = await prisma.activityEvent.findMany({
       where,
       include: { device: true },
       orderBy: { startTime: "desc" },
-      take: limit,
-      skip: offset,
+      take: effectiveLimit,
+      skip: effectiveOffset,
     });
 
     return reply.send(events);

@@ -39,7 +39,9 @@
     "better-sqlite3": "^12.6.2",
     "dotenv": "^17.3.1",
     "fastify": "^5.7.4",
-    "get-windows": "^9.2.3"
+    "fastify-type-provider-zod": "^6.1.0",
+    "get-windows": "^9.2.3",
+    "zod": "^4.3.6"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

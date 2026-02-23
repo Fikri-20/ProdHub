@@ -1,43 +1,28 @@
 import type { FastifyInstance } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import prisma from "../lib/prisma.js";
+import { summaryQuerySchema } from "../schemas/summary.js";
 
 const summaryRoutes = async (app: FastifyInstance) => {
-  // GET /api/summary — aggregate event durations
-  app.get("/", async (request, reply) => {
-    const query = request.query as Record<string, string | undefined>;
+  const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-    const groupBy = query.groupBy;
-    if (groupBy !== "app" && groupBy !== "category") {
-      return reply.status(400).send({ error: "groupBy query param is required and must be 'app' or 'category'" });
-    }
+  // GET /api/summary — aggregate event durations
+  typedApp.get("/", {
+    schema: { querystring: summaryQuerySchema },
+  }, async (request, reply) => {
+    const { groupBy, from, to } = request.query;
 
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    let from = twentyFourHoursAgo;
-    let to = now;
-
-    if (query.from) {
-      const parsed = new Date(query.from);
-      if (isNaN(parsed.getTime())) {
-        return reply.status(400).send({ error: "from must be a valid ISO date string" });
-      }
-      from = parsed;
-    }
-
-    if (query.to) {
-      const parsed = new Date(query.to);
-      if (isNaN(parsed.getTime())) {
-        return reply.status(400).send({ error: "to must be a valid ISO date string" });
-      }
-      to = parsed;
-    }
+    const effectiveFrom = from ?? twentyFourHoursAgo;
+    const effectiveTo = to ?? now;
 
     if (groupBy === "app") {
       const results = await prisma.activityEvent.groupBy({
         by: ["appName"],
         where: {
-          startTime: { gte: from, lte: to },
+          startTime: { gte: effectiveFrom, lte: effectiveTo },
         },
         _sum: { duration: true },
         orderBy: { _sum: { duration: "desc" } },
@@ -60,9 +45,10 @@ const summaryRoutes = async (app: FastifyInstance) => {
       FROM categories c
       LEFT JOIN category_assignments ca ON ca.category_id = c.id
       LEFT JOIN activity_events ae ON ae.id = ca.event_id
-        AND ae.start_time >= ${from}
-        AND ae.start_time <= ${to}
+        AND ae.start_time >= ${effectiveFrom}
+        AND ae.start_time <= ${effectiveTo}
       GROUP BY c.id, c.name
+      HAVING COALESCE(SUM(ae.duration), 0) > 0
       ORDER BY total_duration DESC
     `;
 

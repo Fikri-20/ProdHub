@@ -15,6 +15,7 @@ model Device {
 
   events ActivityEvent[]
 
+  @@unique([name, os])
   @@map("devices")
 }
 

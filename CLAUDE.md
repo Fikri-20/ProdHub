@@ -15,7 +15,7 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 2.1 Fastify server with plugin-based route architecture
   - [x] 2.2 PostgreSQL (Docker) + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
   - [x] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
-  - [ ] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
+  - [x] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
   - [ ] 2.5 Categorization engine — TICKET-003
   - [ ] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
 - **Phase 3 (not started):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)

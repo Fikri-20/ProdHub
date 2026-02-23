@@ -123,6 +123,16 @@ describe("Category Routes", () => {
 
       expect(res.statusCode).toBe(400);
     });
+
+    it("should return 400 for whitespace-only name", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/categories",
+        payload: { name: "   " },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
   });
 
   describe("GET /api/categories/:id", () => {
@@ -145,6 +155,15 @@ describe("Category Routes", () => {
       });
 
       expect(res.statusCode).toBe(404);
+    });
+
+    it("should return 400 for invalid UUID", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/categories/not-a-uuid",
+      });
+
+      expect(res.statusCode).toBe(400);
     });
   });
 

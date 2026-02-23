@@ -1,6 +1,6 @@
 # TICKET-001: API Endpoints (heartbeat, query, summary, categories CRUD)
 
-## Status: `implemented`
+## Status: `approved`
 ## Priority: P0
 
 ## Summary
@@ -46,3 +46,6 @@ Build the four core API endpoint groups that power the tracker-to-API pipeline: 
 | 2026-02-23 | — | draft | Claude | Ticket created |
 | 2026-02-23 | draft | implementing | Claude | Implementation started |
 | 2026-02-23 | implementing | implemented | Claude | All 36 tests passing, ready for review |
+| 2026-02-23 | implemented | review-failed | Codex | See /reviews/REVIEW_001.md (non-atomic device upsert, summary edge-case mismatch) |
+| 2026-02-24 | review-failed | implemented | Claude | Fixed: atomic device upsert via compound unique + prisma.upsert, category summary HAVING clause filters zero-duration rows, added tests (40 total passing) |
+| 2026-02-24 | implemented | approved | Codex | See /reviews/REVIEW_001_R2.md — all issues resolved |

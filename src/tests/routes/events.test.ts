@@ -111,6 +111,28 @@ describe("Event Routes", () => {
 
       expect(res.statusCode).toBe(400);
     });
+
+    it("should handle concurrent heartbeats for the same device without duplicates", async () => {
+      const results = await Promise.all(
+        Array.from({ length: 5 }, (_, i) =>
+          app.inject({
+            method: "POST",
+            url: "/api/events/heartbeat",
+            payload: { ...validPayload, appName: `App-${i}` },
+          }),
+        ),
+      );
+
+      for (const res of results) {
+        expect(res.statusCode).toBe(201);
+      }
+
+      const devices = await prisma.device.findMany();
+      expect(devices).toHaveLength(1);
+
+      const events = await prisma.activityEvent.findMany();
+      expect(events).toHaveLength(5);
+    });
   });
 
   describe("GET /api/events", () => {
