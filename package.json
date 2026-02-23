@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx --watch src/tracker.ts",
-    "build": "tsup src/tracker.ts --format esm --outDir dist",
+    "dev:server": "tsx --watch src/server.ts",
+    "build": "tsup src/tracker.ts src/server.ts --format esm --outDir dist",
     "start": "node dist/tracker.js",
+    "start:server": "node dist/server.js",
     "start:bg": "node dist/tracker.js > tracker.log 2>&1 & disown"
   },
   "keywords": [],
@@ -24,6 +26,7 @@
   "dependencies": {
     "@paymoapp/active-window": "^2.1.2",
     "better-sqlite3": "^12.6.2",
+    "fastify": "^5.7.4",
     "get-windows": "^9.2.3"
   },
   "pnpm": {
