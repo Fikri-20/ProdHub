@@ -1,58 +1,145 @@
+import os from "node:os";
 import { activeWindow } from "get-windows";
-import { type ActivityEvent } from "./types.js";
-import { insertEvent, updateEvent } from "./database.js";
 
-let lastApp = "";
-let lastTitle = "";
-let lastStartTime: Date | null = null;
-let currentRowId: number | null = null;
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+const API_URL = process.env.TRACKER_API_URL ?? "http://localhost:3000";
+const POLL_INTERVAL_MS = 5_000;
 
-setInterval(async () => {
+const DEVICE_NAME = os.hostname();
+const OS_NAME = (() => {
+  const platform = os.platform();
+  const map: Record<string, string> = {
+    win32: "Windows",
+    darwin: "macOS",
+    linux: "Linux",
+  };
+  return map[platform] ?? platform;
+})();
+
+// ---------------------------------------------------------------------------
+// Heartbeat sender
+// ---------------------------------------------------------------------------
+interface HeartbeatPayload {
+  deviceName: string;
+  os: string;
+  appName: string;
+  windowTitle: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+}
+
+async function sendHeartbeat(payload: HeartbeatPayload): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/events/heartbeat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`[tracker] Heartbeat failed (${res.status}): ${body}`);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error(`[tracker] Heartbeat error:`, (err as Error).message);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Session tracking state
+// ---------------------------------------------------------------------------
+let currentApp = "";
+let currentTitle = "";
+let sessionStart: Date | null = null;
+
+/**
+ * Flush the current session — sends a heartbeat for the completed window session.
+ * Returns true if the heartbeat was sent successfully.
+ */
+async function flushSession(): Promise<boolean> {
+  if (!sessionStart || !currentApp) return true;
+
+  const now = new Date();
+  const duration = Math.max(
+    0,
+    Math.round((now.getTime() - sessionStart.getTime()) / 1000),
+  );
+
+  const payload: HeartbeatPayload = {
+    deviceName: DEVICE_NAME,
+    os: OS_NAME,
+    appName: currentApp,
+    windowTitle: currentTitle,
+    startTime: sessionStart.toISOString(),
+    endTime: now.toISOString(),
+    duration,
+  };
+
+  return sendHeartbeat(payload);
+}
+
+// ---------------------------------------------------------------------------
+// Main polling loop
+// ---------------------------------------------------------------------------
+const timer = setInterval(async () => {
   const win = await activeWindow();
 
   if (!win) {
-    console.log("No active window found.");
     return;
   }
 
-  const currentApp = win.owner.name;
-  const now = new Date();
+  const appName = win.owner.name;
+  const windowTitle = win.title;
 
-  if (lastApp === currentApp && currentRowId !== null && lastStartTime) {
-    // Same app still active — extend the existing row
-    const duration = Math.floor(
-      (now.getTime() - lastStartTime.getTime()) / 1000,
-    );
-    updateEvent(currentRowId, now.toISOString(), duration);
-  } else {
-    // App switched — insert a new row for the new app
-    lastApp = currentApp;
-    lastTitle = win.title;
-    lastStartTime = now;
-
-    const event: ActivityEvent = {
-      appName: currentApp,
-      windowTitle: win.title,
-      startTime: now.toISOString(),
-      endTime: now.toISOString(),
-      duration: 0,
-    };
-    currentRowId = insertEvent(event);
-    console.log(`Switched to: ${currentApp} — "${win.title}"`);
+  // Same window still active — nothing to do yet
+  if (appName === currentApp && windowTitle === currentTitle) {
+    return;
   }
-}, 5000);
 
-function shutdown() {
-  if (currentRowId !== null && lastStartTime) {
-    const now = new Date();
-    const duration = Math.floor(
-      (now.getTime() - lastStartTime.getTime()) / 1000,
-    );
-    updateEvent(currentRowId, now.toISOString(), duration);
-    console.log(`Saved final event: ${lastApp} for ${duration}s`);
+  // Window changed — flush the previous session
+  if (sessionStart) {
+    await flushSession();
   }
+
+  // Start tracking the new session
+  currentApp = appName;
+  currentTitle = windowTitle;
+  sessionStart = new Date();
+
+  console.log(`[tracker] Switched to: ${appName} — "${windowTitle}"`);
+}, POLL_INTERVAL_MS);
+
+// ---------------------------------------------------------------------------
+// Graceful shutdown
+// ---------------------------------------------------------------------------
+async function shutdown() {
+  clearInterval(timer);
+
+  if (sessionStart && currentApp) {
+    console.log(`[tracker] Shutting down — flushing final session...`);
+    const ok = await flushSession();
+    if (ok) {
+      console.log(
+        `[tracker] Final session sent: ${currentApp} (${Math.round((Date.now() - sessionStart.getTime()) / 1000)}s)`,
+      );
+    } else {
+      console.error(`[tracker] Failed to send final session.`);
+    }
+  }
+
   process.exit(0);
 }
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
+console.log(
+  `[tracker] Started — device: ${DEVICE_NAME} (${OS_NAME}), API: ${API_URL}`,
+);

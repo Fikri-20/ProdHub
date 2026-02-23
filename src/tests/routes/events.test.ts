@@ -19,6 +19,7 @@ describe("Event Routes", () => {
     // Clean tables in correct order (foreign key constraints)
     await prisma.categoryAssignment.deleteMany();
     await prisma.activityEvent.deleteMany();
+    await prisma.category.deleteMany();
     await prisma.device.deleteMany();
   });
 
@@ -110,6 +111,28 @@ describe("Event Routes", () => {
       });
 
       expect(res.statusCode).toBe(400);
+    });
+
+    it("should auto-assign matching categories from rules", async () => {
+      const category = await prisma.category.create({
+        data: { name: "Coding", rules: ["VS\\sCode"] },
+      });
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: validPayload,
+      });
+
+      expect(res.statusCode).toBe(201);
+
+      const createdEventId = res.json().id as string;
+      const assignments = await prisma.categoryAssignment.findMany({
+        where: { eventId: createdEventId },
+      });
+
+      expect(assignments).toHaveLength(1);
+      expect(assignments[0]!.categoryId).toBe(category.id);
     });
 
     it("should handle concurrent heartbeats for the same device without duplicates", async () => {

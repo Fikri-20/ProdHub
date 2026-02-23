@@ -124,6 +124,16 @@ describe("Category Routes", () => {
       expect(res.statusCode).toBe(400);
     });
 
+    it("should return 400 for invalid regex rule", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/categories",
+        payload: { name: "InvalidRuleCategory", rules: ["("] },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+
     it("should return 400 for whitespace-only name", async () => {
       const res = await app.inject({
         method: "POST",
@@ -132,6 +142,37 @@ describe("Category Routes", () => {
       });
 
       expect(res.statusCode).toBe(400);
+    });
+
+    it("should backfill assignments for existing matching events", async () => {
+      const device = await prisma.device.create({
+        data: { name: "dev-machine", os: "Windows" },
+      });
+      const event = await prisma.activityEvent.create({
+        data: {
+          deviceId: device.id,
+          appName: "VS Code",
+          windowTitle: "index.ts",
+          startTime: new Date("2026-02-23T10:00:00Z"),
+          endTime: new Date("2026-02-23T10:05:00Z"),
+          duration: 300,
+        },
+      });
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/categories",
+        payload: { name: "Coding", rules: ["VS\\sCode"] },
+      });
+
+      expect(res.statusCode).toBe(201);
+      const categoryId = res.json().id as string;
+
+      const assignments = await prisma.categoryAssignment.findMany({
+        where: { eventId: event.id },
+      });
+      expect(assignments).toHaveLength(1);
+      expect(assignments[0]!.categoryId).toBe(categoryId);
     });
   });
 
@@ -203,6 +244,67 @@ describe("Category Routes", () => {
       });
 
       expect(res.statusCode).toBe(409);
+    });
+
+    it("should return 400 for invalid regex rule on update", async () => {
+      const cat = await prisma.category.create({ data: { name: "Work" } });
+
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/categories/${cat.id}`,
+        payload: { rules: ["("] },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    it("should recategorize assignments when rules are updated", async () => {
+      const device = await prisma.device.create({
+        data: { name: "dev-machine", os: "Windows" },
+      });
+      const vscodeEvent = await prisma.activityEvent.create({
+        data: {
+          deviceId: device.id,
+          appName: "VS Code",
+          windowTitle: "server.ts",
+          startTime: new Date("2026-02-23T10:00:00Z"),
+          endTime: new Date("2026-02-23T10:05:00Z"),
+          duration: 300,
+        },
+      });
+      const chromeEvent = await prisma.activityEvent.create({
+        data: {
+          deviceId: device.id,
+          appName: "Chrome",
+          windowTitle: "Search",
+          startTime: new Date("2026-02-23T10:06:00Z"),
+          endTime: new Date("2026-02-23T10:10:00Z"),
+          duration: 240,
+        },
+      });
+
+      const category = await prisma.category.create({
+        data: { name: "Focus", rules: ["Chrome"] },
+      });
+      await prisma.categoryAssignment.create({
+        data: { eventId: chromeEvent.id, categoryId: category.id },
+      });
+
+      const patchRes = await app.inject({
+        method: "PATCH",
+        url: `/api/categories/${category.id}`,
+        payload: { rules: ["VS\\sCode"] },
+      });
+
+      expect(patchRes.statusCode).toBe(200);
+
+      const assignments = await prisma.categoryAssignment.findMany({
+        where: { categoryId: category.id },
+        orderBy: { eventId: "asc" },
+      });
+      expect(assignments).toHaveLength(1);
+      expect(assignments[0]!.eventId).toBe(vscodeEvent.id);
+      expect(assignments[0]!.eventId).not.toBe(chromeEvent.id);
     });
   });
 

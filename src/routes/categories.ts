@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import prisma from "../lib/prisma.js";
+import { recategorizeForCategory } from "../services/categorization.js";
 import {
   createCategoryBodySchema,
   updateCategoryBodySchema,
@@ -40,6 +41,8 @@ const categoryRoutes = async (app: FastifyInstance) => {
         ...(rules !== undefined ? { rules } : {}),
       },
     });
+
+    await recategorizeForCategory(category.id);
 
     return reply.status(201).send(category);
   });
@@ -103,6 +106,10 @@ const categoryRoutes = async (app: FastifyInstance) => {
       where: { id },
       data,
     });
+
+    if (rules !== undefined) {
+      await recategorizeForCategory(id);
+    }
 
     return reply.send(updated);
   });

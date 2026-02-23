@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import prisma from "../lib/prisma.js";
+import { categorizeEvent } from "../services/categorization.js";
 import { heartbeatBodySchema, eventsQuerySchema } from "../schemas/events.js";
 
 const eventRoutes = async (app: FastifyInstance) => {
@@ -31,6 +32,8 @@ const eventRoutes = async (app: FastifyInstance) => {
       },
       include: { device: true },
     });
+
+    await categorizeEvent(event.id, appName, windowTitle);
 
     return reply.status(201).send(event);
   });

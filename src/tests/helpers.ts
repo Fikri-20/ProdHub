@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import {
   serializerCompiler,
   validatorCompiler,
@@ -27,8 +27,9 @@ export function buildApp() {
       return reply.status(400).send({ error: message });
     }
 
-    reply.status(error.statusCode ?? 500).send({
-      error: error.message,
+    const err = error as FastifyError;
+    reply.status(err.statusCode ?? 500).send({
+      error: err.message,
     });
   });
 

@@ -1,6 +1,14 @@
 import { z } from "zod";
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+const validRegexRule = z.string().refine((pattern) => {
+  try {
+    new RegExp(pattern);
+    return true;
+  } catch {
+    return false;
+  }
+}, "rules must contain valid regex patterns");
 
 export const createCategoryBodySchema = z.object({
   name: z
@@ -12,7 +20,7 @@ export const createCategoryBodySchema = z.object({
     .string()
     .regex(HEX_COLOR_REGEX, "color must be a hex string (e.g. #FF5733)")
     .optional(),
-  rules: z.array(z.string()).optional(),
+  rules: z.array(validRegexRule).optional(),
 });
 
 export const updateCategoryBodySchema = z
@@ -27,7 +35,7 @@ export const updateCategoryBodySchema = z
       .string()
       .regex(HEX_COLOR_REGEX, "color must be a hex string (e.g. #FF5733)")
       .optional(),
-    rules: z.array(z.string()).optional(),
+    rules: z.array(validRegexRule).optional(),
   });
 
 export const categoryParamsSchema = z.object({
