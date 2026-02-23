@@ -1,0 +1,9 @@
+## LLM Generated Files / accompanying
+INSTRUCTIONS.md
+PLAN.md
+
+## Node modules 
+node_modules/
+
+## Bundling dir. 
+dist/
