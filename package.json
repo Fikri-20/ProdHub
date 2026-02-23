@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx --watch src/tracker.ts",
     "build": "tsup src/tracker.ts --format esm --outDir dist",
-    "start": "node dist/tracker.js"
+    "start": "node dist/tracker.js",
+    "start:bg": "node dist/tracker.js > tracker.log 2>&1 & disown"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.30.1",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.3.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
@@ -21,11 +23,18 @@
   },
   "dependencies": {
     "@paymoapp/active-window": "^2.1.2",
+    "better-sqlite3": "^12.6.2",
     "get-windows": "^9.2.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "@paymoapp/active-window"
+      "@paymoapp/active-window",
+      "better-sqlite3"
+    ],
+    "ignoredBuiltDependencies": [
+      "@paymoapp/active-window",
+      "active-windows",
+      "get-windows"
     ]
   }
 }

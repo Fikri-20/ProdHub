@@ -5,5 +5,9 @@ PLAN.md
 ## Node modules 
 node_modules/
 
-## Bundling dir. 
+## Bundling dir.
 dist/
+
+## Runtime data
+activity.db
+tracker.log
