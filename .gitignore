@@ -1,6 +1,5 @@
 ## LLM Generated Files / accompanying
 INSTRUCTIONS.md
-PLAN.md
 
 ## Node modules 
 node_modules/
@@ -11,3 +10,12 @@ dist/
 ## Runtime data
 activity.db
 tracker.log
+
+## Environment variables
+.env
+/src/generated/prisma
+
+## SDD templates (don't track these)
+tickets/.template/
+specs/_SPEC_TEMPLATE.md
+reviews/_REVIEW_TEMPLATE.md
