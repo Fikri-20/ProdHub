@@ -9,7 +9,12 @@
     "build": "tsup src/tracker.ts src/server.ts --format esm --outDir dist",
     "start": "node dist/tracker.js",
     "start:server": "node dist/server.js",
-    "start:bg": "node dist/tracker.js > tracker.log 2>&1 & disown"
+    "start:bg": "node dist/tracker.js > tracker.log 2>&1 & disown",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -19,20 +24,25 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.3.0",
+    "prisma": "^7.4.1",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@paymoapp/active-window": "^2.1.2",
+    "@prisma/client": "^7.4.1",
     "better-sqlite3": "^12.6.2",
+    "dotenv": "^17.3.1",
     "fastify": "^5.7.4",
     "get-windows": "^9.2.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@paymoapp/active-window",
-      "better-sqlite3"
+      "@prisma/engines",
+      "better-sqlite3",
+      "prisma"
     ],
     "ignoredBuiltDependencies": [
       "@paymoapp/active-window",

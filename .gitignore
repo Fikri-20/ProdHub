@@ -11,3 +11,7 @@ dist/
 ## Runtime data
 activity.db
 tracker.log
+
+## Environment variables
+.env
+/src/generated/prisma
