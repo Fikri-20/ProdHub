@@ -14,10 +14,16 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 - **Phase 2 (in progress):** REST API with Fastify + PostgreSQL + Prisma.
   - [x] 2.1 Fastify server with plugin-based route architecture
   - [x] 2.2 PostgreSQL (Docker) + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
-  - [ ] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD)
-  - [ ] 2.4 Zod validation with fastify-type-provider-zod
-  - [ ] 2.5 Categorization engine
-  - [ ] 2.6 Migrate tracker to POST heartbeats to API
+  - [ ] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
+  - [ ] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
+  - [ ] 2.5 Categorization engine — TICKET-003
+  - [ ] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
+- **Phase 3 (not started):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
+- **Phase 4 (not started):** Next.js Dashboard (TICKET-009 through TICKET-015)
+- **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
+- **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)
+- **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
+- **Phase 8 (not started):** Deployment + SaaS Infrastructure (TICKET-032 through TICKET-035)
 
 ## Commands
 
@@ -76,6 +82,59 @@ A single long-running Node.js process that polls the active window every 5 secon
 | Backend    | Fastify (TS)        | Set up      |
 | Database   | PostgreSQL + Prisma  | Set up      |
 | ORM        | Prisma              | Set up      |
-| Frontend   | React + Vite        | Not started |
+| Auth       | Auth.js             | Not started |
+| Frontend   | Next.js (App Router)| Not started |
 | Desktop    | Electron            | Not started |
 | Validation | Zod                 | Not started |
+
+---
+
+## Spec-Driven Development Workflow
+
+### Agent Roles
+- **Claude (this agent)**: Architect + Developer. SOLE code author.
+- **Codex**: Reviewer + QA. NEVER writes code. See `.codex/CODEX_INSTRUCTIONS.md`.
+
+### Project Structure (SDD)
+- `PLAN.md` — Living technical plan & architecture
+- `memory/constitution.md` — Non-negotiable project principles
+- `specs/` — Feature specifications
+- `tickets/` — Feature tickets with status tracking
+- `reviews/` — Codex review reports (Claude must address these)
+- `.codex/` — Codex agent guardrails
+- `.specify/` — Spec Kit templates and scripts
+- `.claude/commands/` — Spec Kit slash commands
+
+### Ticket Statuses
+| Status | Meaning |
+|--------|---------|
+| `draft` | Created, spec not written |
+| `specified` | Spec complete |
+| `planned` | Technical plan written |
+| `implementing` | Claude actively working |
+| `implemented` | Code done, ready for Codex review |
+| `review-failed` | Codex found issues — see review report |
+| `approved` | Done |
+
+### Workflow Rules
+1. NEVER skip the spec. Every code change traces to a ticket and spec.
+2. One ticket at a time.
+3. Reviews are blocking — fix review issues before starting new work.
+4. Constitution is law — everything in memory/constitution.md is non-negotiable.
+5. Tests are mandatory.
+
+### Before Starting Any Work
+1. Check /reviews/ for unresolved review reports → fix first
+2. Check /tickets/ for the next ticket by priority
+3. Read the ticket's spec in /specs/
+4. Read PLAN.md for architectural context
+5. Read memory/constitution.md for guardrails
+6. Then implement.
+
+### Spec Kit Commands Available
+- `/speckit.constitution` — Create/edit project principles
+- `/speckit.specify` — Generate a feature spec
+- `/speckit.plan` — Generate a technical plan
+- `/speckit.tasks` — Break plan into tasks
+- `/speckit.implement` — Implement tasks
+- `/speckit.check` — Cross-artifact consistency check
