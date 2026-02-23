@@ -1,21 +1,27 @@
 import Fastify from "fastify";
+import prisma from "./lib/prisma.js";
 import eventRoutes from "./routes/events.js";
+import categoryRoutes from "./routes/categories.js";
+import summaryRoutes from "./routes/summary.js";
 
-// Create a Fastify instance — this is your HTTP server.
-// logger: true means Fastify will print every request/response to the console,
-// which is invaluable for debugging during development.
 const app = Fastify({ logger: true });
 
-// Register plugins (route groups).
-// In Fastify, everything is a plugin — even your routes.
-// The { prefix } option means all routes inside eventRoutes
-// will be prefixed with /api/events automatically.
+// Register route plugins
 app.register(eventRoutes, { prefix: "/api/events" });
+app.register(categoryRoutes, { prefix: "/api/categories" });
+app.register(summaryRoutes, { prefix: "/api/summary" });
 
-// Start the server on port 3000.
-// "0.0.0.0" means it listens on all network interfaces, not just localhost.
+// Disconnect Prisma when the server shuts down
+app.addHook("onClose", async () => {
+  await prisma.$disconnect();
+});
+
 const start = async () => {
   try {
+    // Verify database connection on startup
+    await prisma.$connect();
+    app.log.info("Connected to PostgreSQL");
+
     await app.listen({ port: 3000, host: "0.0.0.0" });
   } catch (err) {
     app.log.error(err);
@@ -24,3 +30,5 @@ const start = async () => {
 };
 
 start();
+
+export { app };

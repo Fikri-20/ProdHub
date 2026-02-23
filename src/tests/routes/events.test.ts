@@ -1,0 +1,235 @@
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import type { FastifyInstance } from "fastify";
+import { buildApp } from "../helpers.js";
+import prisma from "../../lib/prisma.js";
+
+describe("Event Routes", () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = buildApp();
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(async () => {
+    // Clean tables in correct order (foreign key constraints)
+    await prisma.categoryAssignment.deleteMany();
+    await prisma.activityEvent.deleteMany();
+    await prisma.device.deleteMany();
+  });
+
+  describe("POST /api/events/heartbeat", () => {
+    const validPayload = {
+      deviceName: "test-machine",
+      os: "Windows",
+      appName: "VS Code",
+      windowTitle: "server.ts - ProdHub",
+      startTime: "2026-02-23T10:00:00.000Z",
+      endTime: "2026-02-23T10:05:00.000Z",
+      duration: 300,
+    };
+
+    it("should create an event and return 201", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: validPayload,
+      });
+
+      expect(res.statusCode).toBe(201);
+
+      const body = res.json();
+      expect(body.appName).toBe("VS Code");
+      expect(body.windowTitle).toBe("server.ts - ProdHub");
+      expect(body.duration).toBe(300);
+      expect(body.device).toBeDefined();
+      expect(body.device.name).toBe("test-machine");
+      expect(body.device.os).toBe("Windows");
+    });
+
+    it("should upsert device (not create duplicates)", async () => {
+      await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: validPayload,
+      });
+
+      await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: { ...validPayload, appName: "Chrome" },
+      });
+
+      const devices = await prisma.device.findMany();
+      expect(devices).toHaveLength(1);
+
+      const events = await prisma.activityEvent.findMany();
+      expect(events).toHaveLength(2);
+    });
+
+    it("should return 400 for missing fields", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: { deviceName: "test" },
+      });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error).toBeDefined();
+    });
+
+    it("should return 400 for empty string fields", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: { ...validPayload, appName: "  " },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    it("should return 400 for invalid duration", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: { ...validPayload, duration: -5 },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    it("should return 400 for invalid date", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: { ...validPayload, startTime: "not-a-date" },
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+  });
+
+  describe("GET /api/events", () => {
+    beforeEach(async () => {
+      // Seed some events
+      const device = await prisma.device.create({
+        data: { name: "test-machine", os: "Windows" },
+      });
+
+      await prisma.activityEvent.createMany({
+        data: [
+          {
+            deviceId: device.id,
+            appName: "VS Code",
+            windowTitle: "file1.ts",
+            startTime: new Date("2026-02-23T10:00:00Z"),
+            endTime: new Date("2026-02-23T10:05:00Z"),
+            duration: 300,
+          },
+          {
+            deviceId: device.id,
+            appName: "Chrome",
+            windowTitle: "Google",
+            startTime: new Date("2026-02-23T10:05:00Z"),
+            endTime: new Date("2026-02-23T10:10:00Z"),
+            duration: 300,
+          },
+          {
+            deviceId: device.id,
+            appName: "VS Code",
+            windowTitle: "file2.ts",
+            startTime: new Date("2026-02-22T10:00:00Z"),
+            endTime: new Date("2026-02-22T10:05:00Z"),
+            duration: 300,
+          },
+        ],
+      });
+    });
+
+    it("should return events with device info", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z",
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body).toHaveLength(3);
+      expect(body[0].device).toBeDefined();
+    });
+
+    it("should filter by date range", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(2);
+    });
+
+    it("should filter by appName", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&appName=Chrome",
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(1);
+      expect(res.json()[0].appName).toBe("Chrome");
+    });
+
+    it("should support pagination", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&limit=2&offset=0",
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(2);
+
+      const res2 = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&limit=2&offset=2",
+      });
+
+      expect(res2.json()).toHaveLength(1);
+    });
+
+    it("should order by startTime desc", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z",
+      });
+
+      const body = res.json();
+      const times = body.map((e: { startTime: string }) => new Date(e.startTime).getTime());
+      for (let i = 1; i < times.length; i++) {
+        expect(times[i - 1]).toBeGreaterThanOrEqual(times[i]);
+      }
+    });
+
+    it("should return empty array for no matches", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z",
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(0);
+    });
+
+    it("should return 400 for invalid date format", async () => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=not-a-date",
+      });
+
+      expect(res.statusCode).toBe(400);
+    });
+  });
+});

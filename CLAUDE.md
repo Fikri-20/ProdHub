@@ -14,7 +14,7 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 - **Phase 2 (in progress):** REST API with Fastify + PostgreSQL + Prisma.
   - [x] 2.1 Fastify server with plugin-based route architecture
   - [x] 2.2 PostgreSQL (Docker) + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
-  - [ ] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
+  - [x] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
   - [ ] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
   - [ ] 2.5 Categorization engine — TICKET-003
   - [ ] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
@@ -41,9 +41,13 @@ pnpm db:down          # Stop PostgreSQL container
 pnpm db:migrate       # Run Prisma migrations (prisma migrate dev)
 pnpm db:studio        # Open Prisma Studio GUI
 pnpm db:generate      # Regenerate Prisma client
+
+# Testing
+pnpm test             # Run all tests (vitest run)
+pnpm test:watch       # Run tests in watch mode (vitest)
 ```
 
-Package manager is **pnpm** (v10.30.1). No test runner or linter is configured yet.
+Package manager is **pnpm** (v10.30.1). Test runner: **Vitest**. No linter configured yet.
 
 ## Architecture
 
@@ -56,8 +60,11 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/query.ts`** — Placeholder for querying activity data.
 
 ### API Server (Phase 2 — PostgreSQL)
-- **`src/server.ts`** — Fastify server on port 3000 with plugin architecture.
-- **`src/routes/events.ts`** — Event routes plugin registered at `/api/events` prefix.
+- **`src/server.ts`** — Fastify server on port 3000 with plugin architecture. Registers route plugins and manages Prisma lifecycle.
+- **`src/lib/prisma.ts`** — Prisma client singleton using `@prisma/adapter-pg`.
+- **`src/routes/events.ts`** — Event routes: `POST /api/events/heartbeat` (ingest + device upsert), `GET /api/events` (query with filters/pagination).
+- **`src/routes/categories.ts`** — Categories CRUD at `/api/categories` (GET list, POST create, GET/:id, PATCH/:id, DELETE/:id).
+- **`src/routes/summary.ts`** — `GET /api/summary?groupBy=app|category` (aggregated durations).
 
 ### Database (PostgreSQL + Prisma)
 - **`docker-compose.yml`** — PostgreSQL 16 Alpine with persistent volume. Credentials: `prodhub/prodhub_dev`, database: `prodhub`.
