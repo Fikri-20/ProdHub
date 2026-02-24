@@ -12,6 +12,8 @@ declare module "fastify" {
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const PUBLIC_PATHS = ["/api/events/health"];
+
 /**
  * Fastify plugin that authenticates requests via two strategies:
  *
@@ -26,6 +28,11 @@ const authMiddleware = fp(async (app: FastifyInstance) => {
   app.addHook(
     "preHandler",
     async (request: FastifyRequest, reply: FastifyReply) => {
+      // Skip auth for public paths
+      if (PUBLIC_PATHS.includes(request.url.split("?")[0]!)) {
+        return;
+      }
+
       // Strategy 1: Bearer token (API key)
       const authHeader = request.headers.authorization;
       if (authHeader?.startsWith("Bearer ")) {
