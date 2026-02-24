@@ -11,124 +11,158 @@ import {
 const categoryRoutes = async (app: FastifyInstance) => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
-  // GET /api/categories — list all categories
-  app.get("/", async (_request, reply) => {
+  // GET /api/categories — list all categories (scoped to user)
+  app.get("/", async (request, reply) => {
+    const userId = request.userId;
+
     const categories = await prisma.category.findMany({
+      where: { userId },
       orderBy: { name: "asc" },
     });
     return reply.send(categories);
   });
 
-  // POST /api/categories — create a category
-  typedApp.post("/", {
-    schema: { body: createCategoryBodySchema },
-  }, async (request, reply) => {
-    const { name, color, rules } = request.body;
-
-    // Check uniqueness
-    const existing = await prisma.category.findUnique({
-      where: { name },
-    });
-
-    if (existing) {
-      return reply.status(409).send({ error: `Category "${name}" already exists` });
-    }
-
-    const category = await prisma.category.create({
-      data: {
-        name,
-        ...(color !== undefined ? { color } : {}),
-        ...(rules !== undefined ? { rules } : {}),
-      },
-    });
-
-    await recategorizeForCategory(category.id);
-
-    return reply.status(201).send(category);
-  });
-
-  // GET /api/categories/:id — get a single category
-  typedApp.get("/:id", {
-    schema: { params: categoryParamsSchema },
-  }, async (request, reply) => {
-    const { id } = request.params;
-
-    const category = await prisma.category.findUnique({
-      where: { id },
-      include: { assignments: true },
-    });
-
-    if (!category) {
-      return reply.status(404).send({ error: "Category not found" });
-    }
-
-    return reply.send(category);
-  });
-
-  // PATCH /api/categories/:id — update a category
-  typedApp.patch("/:id", {
-    schema: {
-      params: categoryParamsSchema,
-      body: updateCategoryBodySchema,
+  // POST /api/categories — create a category (scoped to user)
+  typedApp.post(
+    "/",
+    {
+      schema: { body: createCategoryBodySchema },
     },
-  }, async (request, reply) => {
-    const { id } = request.params;
-    const { name, color, rules } = request.body;
+    async (request, reply) => {
+      const { name, color, rules } = request.body;
+      const userId = request.userId;
 
-    // Check category exists
-    const existing = await prisma.category.findUnique({ where: { id } });
-    if (!existing) {
-      return reply.status(404).send({ error: "Category not found" });
-    }
+      // Check uniqueness within user's categories
+      const existing = await prisma.category.findUnique({
+        where: { name_userId: { name, userId } },
+      });
 
-    const data: Record<string, unknown> = {};
-
-    if (name !== undefined) {
-      // Check uniqueness (only if name is changing)
-      if (name !== existing.name) {
-        const duplicate = await prisma.category.findUnique({ where: { name } });
-        if (duplicate) {
-          return reply.status(409).send({ error: `Category "${name}" already exists` });
-        }
+      if (existing) {
+        return reply
+          .status(409)
+          .send({ error: `Category "${name}" already exists` });
       }
-      data.name = name;
-    }
 
-    if (color !== undefined) {
-      data.color = color;
-    }
+      const category = await prisma.category.create({
+        data: {
+          name,
+          userId,
+          ...(color !== undefined ? { color } : {}),
+          ...(rules !== undefined ? { rules } : {}),
+        },
+      });
 
-    if (rules !== undefined) {
-      data.rules = rules;
-    }
+      await recategorizeForCategory(category.id, userId);
 
-    const updated = await prisma.category.update({
-      where: { id },
-      data,
-    });
+      return reply.status(201).send(category);
+    },
+  );
 
-    if (rules !== undefined) {
-      await recategorizeForCategory(id);
-    }
+  // GET /api/categories/:id — get a single category (scoped to user)
+  typedApp.get(
+    "/:id",
+    {
+      schema: { params: categoryParamsSchema },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const userId = request.userId;
 
-    return reply.send(updated);
-  });
+      const category = await prisma.category.findFirst({
+        where: { id, userId },
+        include: { assignments: true },
+      });
 
-  // DELETE /api/categories/:id — delete a category (cascades assignments)
-  typedApp.delete("/:id", {
-    schema: { params: categoryParamsSchema },
-  }, async (request, reply) => {
-    const { id } = request.params;
+      if (!category) {
+        return reply.status(404).send({ error: "Category not found" });
+      }
 
-    const existing = await prisma.category.findUnique({ where: { id } });
-    if (!existing) {
-      return reply.status(404).send({ error: "Category not found" });
-    }
+      return reply.send(category);
+    },
+  );
 
-    await prisma.category.delete({ where: { id } });
+  // PATCH /api/categories/:id — update a category (scoped to user)
+  typedApp.patch(
+    "/:id",
+    {
+      schema: {
+        params: categoryParamsSchema,
+        body: updateCategoryBodySchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const { name, color, rules } = request.body;
+      const userId = request.userId;
 
-    return reply.status(204).send();
-  });
+      // Check category exists and belongs to user
+      const existing = await prisma.category.findFirst({
+        where: { id, userId },
+      });
+      if (!existing) {
+        return reply.status(404).send({ error: "Category not found" });
+      }
+
+      const data: Record<string, unknown> = {};
+
+      if (name !== undefined) {
+        // Check uniqueness within user's categories
+        if (name !== existing.name) {
+          const duplicate = await prisma.category.findUnique({
+            where: { name_userId: { name, userId } },
+          });
+          if (duplicate) {
+            return reply
+              .status(409)
+              .send({ error: `Category "${name}" already exists` });
+          }
+        }
+        data.name = name;
+      }
+
+      if (color !== undefined) {
+        data.color = color;
+      }
+
+      if (rules !== undefined) {
+        data.rules = rules;
+      }
+
+      const updated = await prisma.category.update({
+        where: { id },
+        data,
+      });
+
+      if (rules !== undefined) {
+        await recategorizeForCategory(id, userId);
+      }
+
+      return reply.send(updated);
+    },
+  );
+
+  // DELETE /api/categories/:id — delete a category (scoped to user)
+  typedApp.delete(
+    "/:id",
+    {
+      schema: { params: categoryParamsSchema },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const userId = request.userId;
+
+      const existing = await prisma.category.findFirst({
+        where: { id, userId },
+      });
+      if (!existing) {
+        return reply.status(404).send({ error: "Category not found" });
+      }
+
+      await prisma.category.delete({ where: { id } });
+
+      return reply.status(204).send();
+    },
+  );
 };
 
 export default categoryRoutes;

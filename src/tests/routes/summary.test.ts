@@ -5,6 +5,7 @@ import prisma from "../../lib/prisma.js";
 
 describe("Summary Routes", () => {
   let app: FastifyInstance;
+  let userId: string;
 
   beforeAll(async () => {
     app = buildApp();
@@ -20,6 +21,12 @@ describe("Summary Routes", () => {
     await prisma.activityEvent.deleteMany();
     await prisma.category.deleteMany();
     await prisma.device.deleteMany();
+    await prisma.user.deleteMany();
+
+    const user = await prisma.user.create({
+      data: { email: "test@example.com", name: "Test User" },
+    });
+    userId = user.id;
   });
 
   describe("GET /api/summary", () => {
@@ -27,6 +34,7 @@ describe("Summary Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/summary",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(400);
@@ -36,6 +44,7 @@ describe("Summary Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/summary?groupBy=invalid",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(400);
@@ -45,6 +54,7 @@ describe("Summary Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/summary?groupBy=app&from=bad-date",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(400);
@@ -53,7 +63,7 @@ describe("Summary Routes", () => {
     describe("groupBy=app", () => {
       beforeEach(async () => {
         const device = await prisma.device.create({
-          data: { name: "test-machine", os: "Windows" },
+          data: { name: "test-machine", os: "Windows", userId },
         });
 
         await prisma.activityEvent.createMany({
@@ -90,6 +100,7 @@ describe("Summary Routes", () => {
         const res = await app.inject({
           method: "GET",
           url: "/api/summary?groupBy=app&from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+          headers: { "x-user-id": userId },
         });
 
         expect(res.statusCode).toBe(200);
@@ -107,6 +118,7 @@ describe("Summary Routes", () => {
         const res = await app.inject({
           method: "GET",
           url: "/api/summary?groupBy=app&from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+          headers: { "x-user-id": userId },
         });
 
         const body = res.json();
@@ -119,6 +131,22 @@ describe("Summary Routes", () => {
         const res = await app.inject({
           method: "GET",
           url: "/api/summary?groupBy=app&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z",
+          headers: { "x-user-id": userId },
+        });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toHaveLength(0);
+      });
+
+      it("should not include other user's events in summary", async () => {
+        const user2 = await prisma.user.create({
+          data: { email: "other@example.com" },
+        });
+
+        const res = await app.inject({
+          method: "GET",
+          url: "/api/summary?groupBy=app&from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+          headers: { "x-user-id": user2.id },
         });
 
         expect(res.statusCode).toBe(200);
@@ -129,7 +157,7 @@ describe("Summary Routes", () => {
     describe("groupBy=category", () => {
       beforeEach(async () => {
         const device = await prisma.device.create({
-          data: { name: "test-machine", os: "Windows" },
+          data: { name: "test-machine", os: "Windows", userId },
         });
 
         const event1 = await prisma.activityEvent.create({
@@ -155,11 +183,11 @@ describe("Summary Routes", () => {
         });
 
         const workCat = await prisma.category.create({
-          data: { name: "Work", color: "#00FF00" },
+          data: { name: "Work", color: "#00FF00", userId },
         });
 
         const browseCat = await prisma.category.create({
-          data: { name: "Browsing", color: "#FF0000" },
+          data: { name: "Browsing", color: "#FF0000", userId },
         });
 
         await prisma.categoryAssignment.createMany({
@@ -174,6 +202,7 @@ describe("Summary Routes", () => {
         const res = await app.inject({
           method: "GET",
           url: "/api/summary?groupBy=category&from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+          headers: { "x-user-id": userId },
         });
 
         expect(res.statusCode).toBe(200);
@@ -182,7 +211,9 @@ describe("Summary Routes", () => {
 
         // Work=300s, Browsing=120s, sorted desc
         const work = body.find((b: { name: string }) => b.name === "Work");
-        const browsing = body.find((b: { name: string }) => b.name === "Browsing");
+        const browsing = body.find(
+          (b: { name: string }) => b.name === "Browsing",
+        );
         expect(work.totalDuration).toBe(300);
         expect(browsing.totalDuration).toBe(120);
       });
@@ -191,6 +222,7 @@ describe("Summary Routes", () => {
         const res = await app.inject({
           method: "GET",
           url: "/api/summary?groupBy=category&from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z",
+          headers: { "x-user-id": userId },
         });
 
         expect(res.statusCode).toBe(200);

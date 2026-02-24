@@ -5,6 +5,7 @@ import prisma from "../../lib/prisma.js";
 
 describe("Category Routes", () => {
   let app: FastifyInstance;
+  let userId: string;
 
   beforeAll(async () => {
     app = buildApp();
@@ -20,6 +21,12 @@ describe("Category Routes", () => {
     await prisma.activityEvent.deleteMany();
     await prisma.category.deleteMany();
     await prisma.device.deleteMany();
+    await prisma.user.deleteMany();
+
+    const user = await prisma.user.create({
+      data: { email: "test@example.com", name: "Test User" },
+    });
+    userId = user.id;
   });
 
   describe("GET /api/categories", () => {
@@ -27,6 +34,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -36,14 +44,15 @@ describe("Category Routes", () => {
     it("should return all categories sorted by name", async () => {
       await prisma.category.createMany({
         data: [
-          { name: "Work", color: "#00FF00" },
-          { name: "Browsing", color: "#FF0000" },
+          { name: "Work", color: "#00FF00", userId },
+          { name: "Browsing", color: "#FF0000", userId },
         ],
       });
 
       const res = await app.inject({
         method: "GET",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -52,6 +61,25 @@ describe("Category Routes", () => {
       expect(body[0].name).toBe("Browsing");
       expect(body[1].name).toBe("Work");
     });
+
+    it("should not return other user's categories", async () => {
+      const user2 = await prisma.user.create({
+        data: { email: "other@example.com" },
+      });
+
+      await prisma.category.create({
+        data: { name: "Work", userId },
+      });
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/categories",
+        headers: { "x-user-id": user2.id },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(0);
+    });
   });
 
   describe("POST /api/categories", () => {
@@ -59,7 +87,12 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
-        payload: { name: "Work", color: "#00FF00", rules: ["VS Code", "Terminal"] },
+        headers: { "x-user-id": userId },
+        payload: {
+          name: "Work",
+          color: "#00FF00",
+          rules: ["VS Code", "Terminal"],
+        },
       });
 
       expect(res.statusCode).toBe(201);
@@ -73,12 +106,13 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "Work" },
       });
 
       expect(res.statusCode).toBe(201);
       const body = res.json();
-      expect(body.color).toBe("#6B7280"); // default from schema
+      expect(body.color).toBe("#6B7280");
       expect(body.rules).toEqual([]);
     });
 
@@ -86,28 +120,48 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { color: "#FF0000" },
       });
 
       expect(res.statusCode).toBe(400);
     });
 
-    it("should return 409 for duplicate name", async () => {
-      await prisma.category.create({ data: { name: "Work" } });
+    it("should return 409 for duplicate name within same user", async () => {
+      await prisma.category.create({ data: { name: "Work", userId } });
 
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "Work" },
       });
 
       expect(res.statusCode).toBe(409);
     });
 
+    it("should allow same category name for different users", async () => {
+      const user2 = await prisma.user.create({
+        data: { email: "other@example.com" },
+      });
+
+      await prisma.category.create({ data: { name: "Work", userId } });
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/categories",
+        headers: { "x-user-id": user2.id },
+        payload: { name: "Work" },
+      });
+
+      expect(res.statusCode).toBe(201);
+    });
+
     it("should return 400 for invalid color", async () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "Test", color: "red" },
       });
 
@@ -118,6 +172,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "Test", rules: "not-array" },
       });
 
@@ -128,6 +183,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "InvalidRuleCategory", rules: ["("] },
       });
 
@@ -138,6 +194,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "   " },
       });
 
@@ -146,7 +203,7 @@ describe("Category Routes", () => {
 
     it("should backfill assignments for existing matching events", async () => {
       const device = await prisma.device.create({
-        data: { name: "dev-machine", os: "Windows" },
+        data: { name: "dev-machine", os: "Windows", userId },
       });
       const event = await prisma.activityEvent.create({
         data: {
@@ -162,6 +219,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/categories",
+        headers: { "x-user-id": userId },
         payload: { name: "Coding", rules: ["VS\\sCode"] },
       });
 
@@ -178,11 +236,14 @@ describe("Category Routes", () => {
 
   describe("GET /api/categories/:id", () => {
     it("should return a single category", async () => {
-      const cat = await prisma.category.create({ data: { name: "Work" } });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
 
       const res = await app.inject({
         method: "GET",
         url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -193,6 +254,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/categories/00000000-0000-0000-0000-000000000000",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(404);
@@ -202,19 +264,40 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/categories/not-a-uuid",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(400);
+    });
+
+    it("should return 404 for another user's category", async () => {
+      const user2 = await prisma.user.create({
+        data: { email: "other@example.com" },
+      });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
+
+      const res = await app.inject({
+        method: "GET",
+        url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": user2.id },
+      });
+
+      expect(res.statusCode).toBe(404);
     });
   });
 
   describe("PATCH /api/categories/:id", () => {
     it("should update category fields", async () => {
-      const cat = await prisma.category.create({ data: { name: "Work" } });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
 
       const res = await app.inject({
         method: "PATCH",
         url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": userId },
         payload: { name: "Development", color: "#0000FF" },
       });
 
@@ -227,6 +310,7 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "PATCH",
         url: "/api/categories/00000000-0000-0000-0000-000000000000",
+        headers: { "x-user-id": userId },
         payload: { name: "Test" },
       });
 
@@ -234,12 +318,15 @@ describe("Category Routes", () => {
     });
 
     it("should return 409 for duplicate name on update", async () => {
-      await prisma.category.create({ data: { name: "Work" } });
-      const cat2 = await prisma.category.create({ data: { name: "Play" } });
+      await prisma.category.create({ data: { name: "Work", userId } });
+      const cat2 = await prisma.category.create({
+        data: { name: "Play", userId },
+      });
 
       const res = await app.inject({
         method: "PATCH",
         url: `/api/categories/${cat2.id}`,
+        headers: { "x-user-id": userId },
         payload: { name: "Work" },
       });
 
@@ -247,11 +334,14 @@ describe("Category Routes", () => {
     });
 
     it("should return 400 for invalid regex rule on update", async () => {
-      const cat = await prisma.category.create({ data: { name: "Work" } });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
 
       const res = await app.inject({
         method: "PATCH",
         url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": userId },
         payload: { rules: ["("] },
       });
 
@@ -260,7 +350,7 @@ describe("Category Routes", () => {
 
     it("should recategorize assignments when rules are updated", async () => {
       const device = await prisma.device.create({
-        data: { name: "dev-machine", os: "Windows" },
+        data: { name: "dev-machine", os: "Windows", userId },
       });
       const vscodeEvent = await prisma.activityEvent.create({
         data: {
@@ -284,7 +374,7 @@ describe("Category Routes", () => {
       });
 
       const category = await prisma.category.create({
-        data: { name: "Focus", rules: ["Chrome"] },
+        data: { name: "Focus", userId, rules: ["Chrome"] },
       });
       await prisma.categoryAssignment.create({
         data: { eventId: chromeEvent.id, categoryId: category.id },
@@ -293,6 +383,7 @@ describe("Category Routes", () => {
       const patchRes = await app.inject({
         method: "PATCH",
         url: `/api/categories/${category.id}`,
+        headers: { "x-user-id": userId },
         payload: { rules: ["VS\\sCode"] },
       });
 
@@ -310,11 +401,14 @@ describe("Category Routes", () => {
 
   describe("DELETE /api/categories/:id", () => {
     it("should delete a category and return 204", async () => {
-      const cat = await prisma.category.create({ data: { name: "Work" } });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
 
       const res = await app.inject({
         method: "DELETE",
         url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(204);
@@ -327,14 +421,19 @@ describe("Category Routes", () => {
       const res = await app.inject({
         method: "DELETE",
         url: "/api/categories/00000000-0000-0000-0000-000000000000",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(404);
     });
 
     it("should cascade delete assignments", async () => {
-      const cat = await prisma.category.create({ data: { name: "Work" } });
-      const device = await prisma.device.create({ data: { name: "test", os: "Windows" } });
+      const cat = await prisma.category.create({
+        data: { name: "Work", userId },
+      });
+      const device = await prisma.device.create({
+        data: { name: "test", os: "Windows", userId },
+      });
       const event = await prisma.activityEvent.create({
         data: {
           deviceId: device.id,
@@ -352,6 +451,7 @@ describe("Category Routes", () => {
       await app.inject({
         method: "DELETE",
         url: `/api/categories/${cat.id}`,
+        headers: { "x-user-id": userId },
       });
 
       const assignments = await prisma.categoryAssignment.findMany({

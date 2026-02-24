@@ -22,16 +22,17 @@ export function matchesCategory(
 }
 
 /**
- * Load all categories with non-empty rules, run matching against the event,
+ * Load the user's categories with non-empty rules, run matching against the event,
  * and create CategoryAssignment records for matches.
  */
 export async function categorizeEvent(
   eventId: string,
   appName: string,
   windowTitle: string,
+  userId: string,
 ): Promise<void> {
   const categories = await prisma.category.findMany({
-    where: { rules: { isEmpty: false } },
+    where: { userId, rules: { isEmpty: false } },
   });
 
   const matchingCategoryIds: string[] = [];
@@ -56,11 +57,12 @@ export async function categorizeEvent(
 const BATCH_SIZE = 500;
 
 /**
- * Delete existing assignments for the given category, then re-scan all events
+ * Delete existing assignments for the given category, then re-scan the user's events
  * in batches and create new assignments for matches. Returns the count of newly assigned events.
  */
 export async function recategorizeForCategory(
   categoryId: string,
+  userId: string,
 ): Promise<number> {
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
@@ -83,10 +85,11 @@ export async function recategorizeForCategory(
   let assignedCount = 0;
   let skip = 0;
 
-  // Batched scan of all events
+  // Batched scan of the user's events only
   while (true) {
     const events = await prisma.activityEvent.findMany({
       select: { id: true, appName: true, windowTitle: true },
+      where: { device: { userId } },
       take: BATCH_SIZE,
       skip,
       orderBy: { id: "asc" },

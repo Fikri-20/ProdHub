@@ -7,26 +7,43 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  devices    Device[]
+  categories Category[]
+
+  @@map("users")
+}
+
 model Device {
   id        String   @id @default(uuid())
+  userId    String   @map("user_id")
   name      String
   os        String
   createdAt DateTime @default(now()) @map("created_at")
 
+  user   User            @relation(fields: [userId], references: [id])
   events ActivityEvent[]
 
-  @@unique([name, os])
+  @@unique([name, os, userId])
   @@map("devices")
 }
 
 model Category {
-  id    String @id @default(uuid())
-  name  String @unique
-  color String @default("#6B7280")
-  rules String[] // regex patterns matching app name or window title
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  name   String
+  color  String   @default("#6B7280")
+  rules  String[] // regex patterns matching app name or window title
 
+  user        User                 @relation(fields: [userId], references: [id])
   assignments CategoryAssignment[]
 
+  @@unique([name, userId])
   @@map("categories")
 }
 

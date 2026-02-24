@@ -5,6 +5,7 @@ import prisma from "../../lib/prisma.js";
 
 describe("Event Routes", () => {
   let app: FastifyInstance;
+  let userId: string;
 
   beforeAll(async () => {
     app = buildApp();
@@ -21,6 +22,13 @@ describe("Event Routes", () => {
     await prisma.activityEvent.deleteMany();
     await prisma.category.deleteMany();
     await prisma.device.deleteMany();
+    await prisma.user.deleteMany();
+
+    // Create a test user
+    const user = await prisma.user.create({
+      data: { email: "test@example.com", name: "Test User" },
+    });
+    userId = user.id;
   });
 
   describe("POST /api/events/heartbeat", () => {
@@ -38,6 +46,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: validPayload,
       });
 
@@ -56,12 +65,14 @@ describe("Event Routes", () => {
       await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: validPayload,
       });
 
       await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: { ...validPayload, appName: "Chrome" },
       });
 
@@ -76,6 +87,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: { deviceName: "test" },
       });
 
@@ -87,6 +99,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: { ...validPayload, appName: "  " },
       });
 
@@ -97,6 +110,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: { ...validPayload, duration: -5 },
       });
 
@@ -107,6 +121,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: { ...validPayload, startTime: "not-a-date" },
       });
 
@@ -115,12 +130,13 @@ describe("Event Routes", () => {
 
     it("should auto-assign matching categories from rules", async () => {
       const category = await prisma.category.create({
-        data: { name: "Coding", rules: ["VS\\sCode"] },
+        data: { name: "Coding", userId, rules: ["VS\\sCode"] },
       });
 
       const res = await app.inject({
         method: "POST",
         url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
         payload: validPayload,
       });
 
@@ -141,6 +157,7 @@ describe("Event Routes", () => {
           app.inject({
             method: "POST",
             url: "/api/events/heartbeat",
+            headers: { "x-user-id": userId },
             payload: { ...validPayload, appName: `App-${i}` },
           }),
         ),
@@ -156,13 +173,47 @@ describe("Event Routes", () => {
       const events = await prisma.activityEvent.findMany();
       expect(events).toHaveLength(5);
     });
+
+    it("should return 401 without X-User-Id header", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        payload: validPayload,
+      });
+
+      expect(res.statusCode).toBe(401);
+    });
+
+    it("should isolate devices per user", async () => {
+      const user2 = await prisma.user.create({
+        data: { email: "user2@example.com" },
+      });
+
+      await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        headers: { "x-user-id": userId },
+        payload: validPayload,
+      });
+
+      await app.inject({
+        method: "POST",
+        url: "/api/events/heartbeat",
+        headers: { "x-user-id": user2.id },
+        payload: validPayload,
+      });
+
+      // Same device name, but different users = 2 device records
+      const devices = await prisma.device.findMany();
+      expect(devices).toHaveLength(2);
+    });
   });
 
   describe("GET /api/events", () => {
     beforeEach(async () => {
-      // Seed some events
+      // Seed some events for the test user
       const device = await prisma.device.create({
-        data: { name: "test-machine", os: "Windows" },
+        data: { name: "test-machine", os: "Windows", userId },
       });
 
       await prisma.activityEvent.createMany({
@@ -199,6 +250,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -211,6 +263,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-23T00:00:00Z&to=2026-02-24T00:00:00Z",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -221,6 +274,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&appName=Chrome",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -232,6 +286,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&limit=2&offset=0",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -240,6 +295,7 @@ describe("Event Routes", () => {
       const res2 = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z&limit=2&offset=2",
+        headers: { "x-user-id": userId },
       });
 
       expect(res2.json()).toHaveLength(1);
@@ -249,10 +305,13 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z",
+        headers: { "x-user-id": userId },
       });
 
       const body = res.json();
-      const times = body.map((e: { startTime: string }) => new Date(e.startTime).getTime());
+      const times = body.map((e: { startTime: string }) =>
+        new Date(e.startTime).getTime(),
+      );
       for (let i = 1; i < times.length; i++) {
         expect(times[i - 1]).toBeGreaterThanOrEqual(times[i]);
       }
@@ -262,6 +321,7 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=2025-01-01T00:00:00Z&to=2025-01-02T00:00:00Z",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(200);
@@ -272,9 +332,25 @@ describe("Event Routes", () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/events?from=not-a-date",
+        headers: { "x-user-id": userId },
       });
 
       expect(res.statusCode).toBe(400);
+    });
+
+    it("should not return other user's events", async () => {
+      const user2 = await prisma.user.create({
+        data: { email: "other@example.com" },
+      });
+
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/events?from=2026-02-22T00:00:00Z&to=2026-02-24T00:00:00Z",
+        headers: { "x-user-id": user2.id },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.json()).toHaveLength(0);
     });
   });
 });

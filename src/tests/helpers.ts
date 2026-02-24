@@ -4,6 +4,7 @@ import {
   validatorCompiler,
   hasZodFastifySchemaValidationErrors,
 } from "fastify-type-provider-zod";
+import userMiddleware from "../middleware/user.js";
 import eventRoutes from "../routes/events.js";
 import categoryRoutes from "../routes/categories.js";
 import summaryRoutes from "../routes/summary.js";
@@ -32,6 +33,9 @@ export function buildApp() {
       error: err.message,
     });
   });
+
+  // Register user middleware (same as server.ts)
+  app.register(userMiddleware);
 
   app.register(eventRoutes, { prefix: "/api/events" });
   app.register(categoryRoutes, { prefix: "/api/categories" });

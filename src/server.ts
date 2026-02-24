@@ -5,6 +5,7 @@ import {
   hasZodFastifySchemaValidationErrors,
 } from "fastify-type-provider-zod";
 import prisma from "./lib/prisma.js";
+import userMiddleware from "./middleware/user.js";
 import eventRoutes from "./routes/events.js";
 import categoryRoutes from "./routes/categories.js";
 import summaryRoutes from "./routes/summary.js";
@@ -29,6 +30,9 @@ app.setErrorHandler(function (error, _request, reply) {
     error: err.message,
   });
 });
+
+// Register user identification middleware (pre-auth, X-User-Id header)
+app.register(userMiddleware);
 
 // Register route plugins
 app.register(eventRoutes, { prefix: "/api/events" });
