@@ -11,14 +11,18 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 ## Current Progress
 
 - **Phase 1 (complete):** Local CLI tracker that polls the active window every 5s and logs to SQLite.
-- **Phase 2 (in progress):** REST API with Fastify + PostgreSQL + Prisma.
+- **Phase 2 (complete):** REST API with Fastify + PostgreSQL + Prisma.
   - [x] 2.1 Fastify server with plugin-based route architecture
   - [x] 2.2 PostgreSQL (Docker) + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
   - [x] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
   - [x] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
-  - [ ] 2.5 Categorization engine — TICKET-003
-  - [ ] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
-- **Phase 3 (not started):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
+  - [x] 2.5 Categorization engine — TICKET-003
+  - [x] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
+- **Phase 3 (in progress):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
+  - [x] 3.1 User model + multi-tenant data scoping — TICKET-005
+  - [x] 3.2 API key auth for desktop agents — TICKET-006
+  - [ ] 3.3 Tenant isolation — TICKET-007
+  - [ ] 3.4 Rate limiting + CORS — TICKET-008
 - **Phase 4 (not started):** Next.js Dashboard (TICKET-009 through TICKET-015)
 - **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
 - **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)

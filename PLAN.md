@@ -57,8 +57,8 @@ main ← stable releases
 | ---------- | -------------------------------------------------------------- | ----------- |
 | —          | 2.1 Fastify server with plugin architecture                    | ✅ Complete |
 | —          | 2.2 PostgreSQL (Docker) + Prisma schema                        | ✅ Complete |
-| TICKET-001 | 2.3 API endpoints (heartbeat, query, summary, categories CRUD) | Pending     |
-| TICKET-002 | 2.4 Zod validation with fastify-type-provider-zod              | Pending     |
+| TICKET-001 | 2.3 API endpoints (heartbeat, query, summary, categories CRUD) | ✅ Complete |
+| TICKET-002 | 2.4 Zod validation with fastify-type-provider-zod              | ✅ Complete |
 | TICKET-003 | 2.5 Categorization engine                                      | ✅ Complete |
 | TICKET-004 | 2.6 Migrate tracker to POST heartbeats to API                  | ✅ Complete |
 

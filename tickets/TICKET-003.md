@@ -1,6 +1,6 @@
 # TICKET-003: Categorization Engine
 
-## Status: `implemented`
+## Status: `approved`
 ## Priority: P0
 
 ## Summary
@@ -37,3 +37,4 @@ Implement automatic rule-based categorization so events are assigned to matching
 | 2026-02-23 | — | draft | Codex | Ticket created from PLAN scope |
 | 2026-02-23 | draft | implementing | Codex | Implementation started |
 | 2026-02-23 | implementing | implemented | Codex | Categorization service wired into routes with test coverage additions |
+| 2026-02-24 | implemented | approved | Claude | Heartbeat returns categories, recategorize endpoint added, 25 new tests pass |
