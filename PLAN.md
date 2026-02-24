@@ -80,7 +80,7 @@ main ← stable releases
 | Ticket     | Task                                                | Status      |
 | ---------- | --------------------------------------------------- | ----------- |
 | TICKET-005 | 3.1 User model in Prisma, relate all data to userId | ✅ Complete |
-| TICKET-006 | 3.2 API key auth for desktop agents                 | Pending     |
+| TICKET-006 | 3.2 API key auth for desktop agents                 | ✅ Complete |
 | TICKET-007 | 3.3 Tenant isolation — all queries scoped to user   | Pending     |
 | TICKET-008 | 3.4 Rate limiting + CORS configuration              | Pending     |
 

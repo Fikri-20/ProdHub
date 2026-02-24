@@ -9,6 +9,7 @@ import userMiddleware from "./middleware/user.js";
 import eventRoutes from "./routes/events.js";
 import categoryRoutes from "./routes/categories.js";
 import summaryRoutes from "./routes/summary.js";
+import keyRoutes from "./routes/keys.js";
 
 const app = Fastify({ logger: true });
 
@@ -38,6 +39,7 @@ app.register(userMiddleware);
 app.register(eventRoutes, { prefix: "/api/events" });
 app.register(categoryRoutes, { prefix: "/api/categories" });
 app.register(summaryRoutes, { prefix: "/api/summary" });
+app.register(keyRoutes, { prefix: "/api/keys" });
 
 // Disconnect Prisma when the server shuts down
 app.addHook("onClose", async () => {

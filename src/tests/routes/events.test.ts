@@ -22,6 +22,7 @@ describe("Event Routes", () => {
     await prisma.activityEvent.deleteMany();
     await prisma.category.deleteMany();
     await prisma.device.deleteMany();
+    await prisma.apiKey.deleteMany();
     await prisma.user.deleteMany();
 
     // Create a test user

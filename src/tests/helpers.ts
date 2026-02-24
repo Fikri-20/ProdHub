@@ -8,6 +8,7 @@ import userMiddleware from "../middleware/user.js";
 import eventRoutes from "../routes/events.js";
 import categoryRoutes from "../routes/categories.js";
 import summaryRoutes from "../routes/summary.js";
+import keyRoutes from "../routes/keys.js";
 
 /**
  * Build a fresh Fastify instance for testing.
@@ -40,6 +41,7 @@ export function buildApp() {
   app.register(eventRoutes, { prefix: "/api/events" });
   app.register(categoryRoutes, { prefix: "/api/categories" });
   app.register(summaryRoutes, { prefix: "/api/summary" });
+  app.register(keyRoutes, { prefix: "/api/keys" });
 
   return app;
 }

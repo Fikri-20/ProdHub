@@ -5,6 +5,7 @@ import { activeWindow } from "get-windows";
 // Configuration
 // ---------------------------------------------------------------------------
 const API_URL = process.env.TRACKER_API_URL ?? "http://localhost:3000";
+const API_KEY = process.env.TRACKER_API_KEY ?? "";
 const POLL_INTERVAL_MS = 5_000;
 
 const DEVICE_NAME = os.hostname();
@@ -33,9 +34,16 @@ interface HeartbeatPayload {
 
 async function sendHeartbeat(payload: HeartbeatPayload): Promise<boolean> {
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (API_KEY) {
+      headers["Authorization"] = `Bearer ${API_KEY}`;
+    }
+
     const res = await fetch(`${API_URL}/api/events/heartbeat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
 

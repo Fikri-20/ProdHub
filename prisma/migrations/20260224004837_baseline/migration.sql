@@ -1,6 +1,31 @@
 -- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "name" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "api_keys" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "prefix" TEXT NOT NULL,
+    "last_used_at" TIMESTAMP(3),
+    "revoked_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "api_keys_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "devices" (
     "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "os" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -11,6 +36,7 @@ CREATE TABLE "devices" (
 -- CreateTable
 CREATE TABLE "categories" (
     "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "color" TEXT NOT NULL DEFAULT '#6B7280',
     "rules" TEXT[],
@@ -41,7 +67,16 @@ CREATE TABLE "category_assignments" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "api_keys_key_key" ON "api_keys"("key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "devices_name_os_user_id_key" ON "devices"("name", "os", "user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "categories_name_user_id_key" ON "categories"("name", "user_id");
 
 -- CreateIndex
 CREATE INDEX "activity_events_device_id_idx" ON "activity_events"("device_id");
@@ -54,6 +89,15 @@ CREATE INDEX "activity_events_app_name_idx" ON "activity_events"("app_name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "category_assignments_event_id_category_id_key" ON "category_assignments"("event_id", "category_id");
+
+-- AddForeignKey
+ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "devices" ADD CONSTRAINT "devices_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "categories" ADD CONSTRAINT "categories_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "activity_events" ADD CONSTRAINT "activity_events_device_id_fkey" FOREIGN KEY ("device_id") REFERENCES "devices"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
