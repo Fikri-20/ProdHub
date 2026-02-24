@@ -18,11 +18,11 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
   - [x] 2.5 Categorization engine — TICKET-003
   - [x] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
-- **Phase 3 (in progress):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
+- **Phase 3 (complete):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
   - [x] 3.1 User model + multi-tenant data scoping — TICKET-005
   - [x] 3.2 API key auth for desktop agents — TICKET-006
-  - [ ] 3.3 Tenant isolation — TICKET-007
-  - [ ] 3.4 Rate limiting + CORS — TICKET-008
+  - [x] 3.3 Tenant isolation — TICKET-007
+  - [x] 3.4 Rate limiting + CORS — TICKET-008
 - **Phase 4 (not started):** Next.js Dashboard (TICKET-009 through TICKET-015)
 - **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
 - **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)

@@ -81,8 +81,8 @@ main ← stable releases
 | ---------- | --------------------------------------------------- | ----------- |
 | TICKET-005 | 3.1 User model in Prisma, relate all data to userId | ✅ Complete |
 | TICKET-006 | 3.2 API key auth for desktop agents                 | ✅ Complete |
-| TICKET-007 | 3.3 Tenant isolation — all queries scoped to user   | Pending     |
-| TICKET-008 | 3.4 Rate limiting + CORS configuration              | Pending     |
+| TICKET-007 | 3.3 Tenant isolation — all queries scoped to user   | ✅ Complete |
+| TICKET-008 | 3.4 Rate limiting + CORS configuration              | ✅ Complete |
 
 **Why before the dashboard:** Adding auth after building the UI means retrofitting every query, route, and component. Doing it now keeps the codebase clean.
 

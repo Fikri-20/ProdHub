@@ -1,4 +1,6 @@
 import Fastify, { type FastifyError } from "fastify";
+import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import {
   serializerCompiler,
   validatorCompiler,
@@ -32,8 +34,25 @@ app.setErrorHandler(function (error, _request, reply) {
   });
 });
 
+// CORS — register before auth so preflight OPTIONS requests work
+app.register(cors, {
+  origin: process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"],
+  credentials: true,
+});
+
 // Register user identification middleware (pre-auth, X-User-Id header)
 app.register(userMiddleware);
+
+// Rate limiting — 100 req/min per user (or per IP for unauthenticated)
+// Registered after userMiddleware with preHandler hook so request.userId is available
+app.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute",
+  hook: "preHandler",
+  keyGenerator: (request) => {
+    return request.userId || request.ip;
+  },
+});
 
 // Register route plugins
 app.register(eventRoutes, { prefix: "/api/events" });
