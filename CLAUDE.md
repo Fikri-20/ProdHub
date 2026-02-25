@@ -23,7 +23,8 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 3.2 API key auth for desktop agents — TICKET-006
   - [x] 3.3 Tenant isolation — TICKET-007
   - [x] 3.4 Rate limiting + CORS — TICKET-008
-- **Phase 4 (not started):** Next.js Dashboard (TICKET-009 through TICKET-015)
+- **Phase 4 (in progress):** Next.js Dashboard (TICKET-009 through TICKET-015)
+  - [x] 4.1 Next.js App Router scaffold + Auth.js — TICKET-009
 - **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
 - **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)
 - **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
@@ -35,6 +36,7 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 # Development
 pnpm dev              # Run tracker in watch mode (tsx --watch src/tracker.ts)
 pnpm dev:server       # Run Fastify server in watch mode (tsx --watch src/server.ts)
+pnpm dev:web          # Run Next.js dashboard in watch mode (port 3001)
 pnpm build            # Bundle with tsup → dist/ (ESM)
 pnpm start            # Run built tracker (node dist/tracker.js)
 pnpm start:server     # Run built server (node dist/server.js)
@@ -56,6 +58,7 @@ Package manager is **pnpm** (v10.30.1). Test runner: **Vitest**. No linter confi
 ## Architecture
 
 ### Tracker (Phase 1 — SQLite)
+
 A single long-running Node.js process that polls the active window every 5 seconds:
 
 - **`src/tracker.ts`** — Entry point. `setInterval` loop using `get-windows` to detect the active window. On app switch, logs the previous event to SQLite.
@@ -64,6 +67,7 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/query.ts`** — Placeholder for querying activity data.
 
 ### API Server (Phase 2 — PostgreSQL)
+
 - **`src/server.ts`** — Fastify server on port 3000 with plugin architecture. Registers route plugins and manages Prisma lifecycle.
 - **`src/lib/prisma.ts`** — Prisma client singleton using `@prisma/adapter-pg`.
 - **`src/routes/events.ts`** — Event routes: `POST /api/events/heartbeat` (ingest + device upsert), `GET /api/events` (query with filters/pagination).
@@ -71,14 +75,30 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/routes/summary.ts`** — `GET /api/summary?groupBy=app|category` (aggregated durations).
 
 ### Database (PostgreSQL + Prisma)
+
 - **`docker-compose.yml`** — PostgreSQL 16 Alpine with persistent volume. Credentials: `prodhub/prodhub_dev`, database: `prodhub`.
-- **`prisma/schema.prisma`** — Four models:
+- **`prisma/schema.prisma`** — Models:
+  - `User` — users with email, name, OAuth fields
+  - `ApiKey` — API keys for desktop agent auth
   - `Device` — tracked machines (id, name, os)
   - `Category` — user-defined categories with regex rules and colors
   - `ActivityEvent` — tracked events (appName, windowTitle, startTime, endTime, duration, deviceId)
   - `CategoryAssignment` — many-to-many link between events and categories
-- **`src/generated/prisma/`** — Auto-generated Prisma client (gitignored).
+  - `Account` — OAuth provider accounts (Auth.js)
+  - `Session` — database sessions (Auth.js)
+  - `VerificationToken` — email magic link tokens (Auth.js)
+- Two generators: `client` → `src/generated/prisma/`, `webClient` → `web/src/generated/prisma/`
 - **`.env`** — `DATABASE_URL` for Prisma (gitignored).
+
+### Web Dashboard (Phase 4 — Next.js)
+
+- **`web/`** — Next.js App Router on port 3001 with Auth.js v5.
+- **`web/src/auth.ts`** — Auth.js config with Google, GitHub, Resend providers + PrismaAdapter.
+- **`web/src/middleware.ts`** — Route protection: unauthenticated → `/auth/signin`, authenticated auth pages → `/dashboard`.
+- **`web/src/lib/prisma.ts`** — Prisma client singleton for web (uses `webClient` generator output).
+- **`web/src/lib/api-client.ts`** — Server-side `apiClient()` (reads session, sets `X-User-Id`) and client-side `createClientApiClient()`.
+- **`web/src/app/auth/signin/`** — Sign-in page with Google, GitHub, email magic link.
+- **`web/src/app/dashboard/`** — Dashboard layout with sidebar nav + header.
 
 ## TypeScript Configuration
 
@@ -88,25 +108,27 @@ A single long-running Node.js process that polls the active window every 5 secon
 
 ## Tech Stack
 
-| Layer      | Choice              | Status      |
-| ---------- | ------------------- | ----------- |
-| Backend    | Fastify (TS)        | Set up      |
+| Layer      | Choice               | Status      |
+| ---------- | -------------------- | ----------- |
+| Backend    | Fastify (TS)         | Set up      |
 | Database   | PostgreSQL + Prisma  | Set up      |
-| ORM        | Prisma              | Set up      |
-| Auth       | Auth.js             | Not started |
-| Frontend   | Next.js (App Router)| Not started |
-| Desktop    | Electron            | Not started |
-| Validation | Zod                 | Not started |
+| ORM        | Prisma               | Set up      |
+| Auth       | Auth.js              | Set up      |
+| Frontend   | Next.js (App Router) | Set up      |
+| Desktop    | Electron             | Not started |
+| Validation | Zod                  | Not started |
 
 ---
 
 ## Spec-Driven Development Workflow
 
 ### Agent Roles
+
 - **Claude (this agent)**: Architect + Developer. SOLE code author.
 - **Codex**: Reviewer + QA. NEVER writes code. See `.codex/CODEX_INSTRUCTIONS.md`.
 
 ### Project Structure (SDD)
+
 - `PLAN.md` — Living technical plan & architecture
 - `memory/constitution.md` — Non-negotiable project principles
 - `specs/` — Feature specifications
@@ -117,17 +139,19 @@ A single long-running Node.js process that polls the active window every 5 secon
 - `.claude/commands/` — Spec Kit slash commands
 
 ### Ticket Statuses
-| Status | Meaning |
-|--------|---------|
-| `draft` | Created, spec not written |
-| `specified` | Spec complete |
-| `planned` | Technical plan written |
-| `implementing` | Claude actively working |
-| `implemented` | Code done, ready for Codex review |
+
+| Status          | Meaning                                |
+| --------------- | -------------------------------------- |
+| `draft`         | Created, spec not written              |
+| `specified`     | Spec complete                          |
+| `planned`       | Technical plan written                 |
+| `implementing`  | Claude actively working                |
+| `implemented`   | Code done, ready for Codex review      |
 | `review-failed` | Codex found issues — see review report |
-| `approved` | Done |
+| `approved`      | Done                                   |
 
 ### Workflow Rules
+
 1. NEVER skip the spec. Every code change traces to a ticket and spec.
 2. One ticket at a time.
 3. Reviews are blocking — fix review issues before starting new work.
@@ -135,6 +159,7 @@ A single long-running Node.js process that polls the active window every 5 secon
 5. Tests are mandatory.
 
 ### Before Starting Any Work
+
 1. Check /reviews/ for unresolved review reports → fix first
 2. Check /tickets/ for the next ticket by priority
 3. Read the ticket's spec in /specs/
@@ -143,6 +168,7 @@ A single long-running Node.js process that polls the active window every 5 secon
 6. Then implement.
 
 ### Spec Kit Commands Available
+
 - `/speckit.constitution` — Create/edit project principles
 - `/speckit.specify` — Generate a feature spec
 - `/speckit.plan` — Generate a technical plan

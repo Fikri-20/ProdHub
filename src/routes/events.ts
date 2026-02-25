@@ -15,12 +15,20 @@ const eventRoutes = async (app: FastifyInstance) => {
     const { deviceName, os, appName, windowTitle, startTime, endTime, duration } = request.body;
     const userId = request.userId;
 
-    // Atomic upsert device by compound unique (name, os, userId)
-    const device = await prisma.device.upsert({
-      where: { name_os_userId: { name: deviceName, os, userId } },
-      update: {},
-      create: { name: deviceName, os, userId },
-    });
+    // Upsert device with retry for concurrent race conditions
+    let device;
+    try {
+      device = await prisma.device.upsert({
+        where: { name_os_userId: { name: deviceName, os, userId } },
+        update: {},
+        create: { name: deviceName, os, userId },
+      });
+    } catch {
+      // Race condition: another request created the device first — just fetch it
+      device = await prisma.device.findUniqueOrThrow({
+        where: { name_os_userId: { name: deviceName, os, userId } },
+      });
+    }
 
     // Create the activity event
     const event = await prisma.activityEvent.create({
@@ -76,7 +84,7 @@ const eventRoutes = async (app: FastifyInstance) => {
 
     const events = await prisma.activityEvent.findMany({
       where,
-      include: { device: true },
+      include: { device: true, categories: { include: { category: true } } },
       orderBy: { startTime: "desc" },
       take: effectiveLimit,
       skip: effectiveOffset,

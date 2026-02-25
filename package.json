@@ -1,11 +1,12 @@
 {
-  "name": "ProdHub",
+  "name": "prodhub",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "tsx --watch src/tracker.ts",
     "dev:server": "tsx --watch src/server.ts",
+    "dev:web": "cd web && pnpm dev",
     "build": "tsup src/tracker.ts src/server.ts --format esm --outDir dist",
     "start": "node dist/tracker.js",
     "start:server": "node dist/server.js",

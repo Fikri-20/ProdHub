@@ -2,7 +2,6 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
     "outDir": "./dist",
 
     // Environment Settings
@@ -40,5 +39,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "exclude": ["dist", "prisma.config.ts", "vitest.config.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["dist", "web", "node_modules", "prisma.config.ts", "vitest.config.ts"]
 }
