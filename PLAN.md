@@ -97,7 +97,7 @@ main ← stable releases
 | Ticket     | Task                                                                         | Status      |
 | ---------- | ---------------------------------------------------------------------------- | ----------- |
 | TICKET-009 | 4.1 Next.js App Router scaffold + Auth.js (Google, GitHub, email)            | ✅ Complete |
-| TICKET-010 | 4.2 Timeline View — vertical timeline, color-coded by category               | Pending     |
+| TICKET-010 | 4.2 Timeline View — vertical timeline, color-coded by category               | ✅ Complete |
 | TICKET-011 | 4.3 Summary View — pie chart + bar chart with date range picker              | Pending     |
 | TICKET-012 | 4.4 GitHub-style Heatmap — calendar grid, category filter, intensity shading | Pending     |
 | TICKET-013 | 4.5 Category Manager — CRUD categories, regex rules, color picker            | Pending     |
