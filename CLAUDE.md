@@ -26,6 +26,8 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 - **Phase 4 (in progress):** Next.js Dashboard (TICKET-009 through TICKET-015)
   - [x] 4.1 Next.js App Router scaffold + Auth.js — TICKET-009
   - [x] 4.2 Timeline View — TICKET-010
+  - [x] 4.3 Summary View — TICKET-011
+  - [x] 4.4 GitHub-style Heatmap — TICKET-012
 - **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
 - **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)
 - **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
