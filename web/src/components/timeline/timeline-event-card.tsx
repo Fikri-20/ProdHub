@@ -44,6 +44,29 @@ export function TimelineEventCard({ event }: TimelineEventCardProps) {
             {formatTime(event.startTime)} – {formatTime(event.endTime)}
           </span>
 
+          {event.device.os === "Browser" ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+                <line x1="21" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="2" />
+                <line x1="8" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" />
+                <line x1="12" y1="3" x2="12" y2="8" stroke="currentColor" strokeWidth="2" />
+                <line x1="12" y1="16" x2="12" y2="21" stroke="currentColor" strokeWidth="2" />
+              </svg>
+              Browser
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              {event.device.os}
+            </span>
+          )}
+
           {event.categories.map((ca) => (
             <span
               key={ca.id}

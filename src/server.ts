@@ -38,7 +38,10 @@ app.setErrorHandler(function (error, _request, reply) {
 // CORS — register before auth so preflight OPTIONS requests work
 app.register(cors, {
   origin: (origin, cb) => {
-    const allowed = process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"];
+    const allowed = process.env.CORS_ORIGIN?.split(",") ?? [
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ];
 
     // Allow requests with no origin (e.g. server-to-server, curl)
     if (!origin) {
