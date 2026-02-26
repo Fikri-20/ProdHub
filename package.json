@@ -13,6 +13,7 @@
     "prepare:desktop:installer": "pnpm build:desktop && node scripts/prepare-desktop-installer.mjs",
     "dist:desktop:dir": "pnpm prepare:desktop:installer && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --win dir",
     "dist:desktop:win": "pnpm prepare:desktop:installer && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --win nsis",
+    "build:ext": "cd browser-extension && pnpm build",
     "start": "node dist/tracker.js",
     "start:server": "node dist/server.js",
     "start:desktop": "electron dist/desktop/main.cjs",
@@ -39,6 +40,7 @@
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "@types/chrome": "^0.0.300",
     "vitest": "^4.0.18"
   },
   "dependencies": {

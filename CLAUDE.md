@@ -23,15 +23,18 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 3.2 API key auth for desktop agents — TICKET-006
   - [x] 3.3 Tenant isolation — TICKET-007
   - [x] 3.4 Rate limiting + CORS — TICKET-008
-- **Phase 4 (in progress):** Next.js Dashboard (TICKET-009 through TICKET-015)
+- **Phase 4 (complete):** Next.js Dashboard (TICKET-009 through TICKET-015)
   - [x] 4.1 Next.js App Router scaffold + Auth.js — TICKET-009
   - [x] 4.2 Timeline View — TICKET-010
   - [x] 4.3 Summary View — TICKET-011
   - [x] 4.4 GitHub-style Heatmap — TICKET-012
   - [x] 4.5 Category Manager — TICKET-013
   - [x] 4.6 Live Status Indicator — TICKET-014
-- **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
-- **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)
+- **Phase 5 (complete):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
+- **Phase 6 (complete):** Browser Extension (TICKET-021 through TICKET-023)
+  - [x] 6.1 Extension scaffold + manifest + build pipeline — TICKET-021
+  - [x] 6.2 Active tab detection + heartbeat sending — TICKET-022
+  - [x] 6.3 Popup UI with config, status, daily stats — TICKET-023
 - **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
 - **Phase 8 (not started):** Deployment + SaaS Infrastructure (TICKET-032 through TICKET-035)
 
@@ -43,6 +46,7 @@ pnpm dev              # Run tracker in watch mode (tsx --watch src/tracker.ts)
 pnpm dev:server       # Run Fastify server in watch mode (tsx --watch src/server.ts)
 pnpm dev:web          # Run Next.js dashboard in watch mode (port 3001)
 pnpm build            # Bundle with tsup → dist/ (ESM)
+pnpm build:ext        # Build browser extension → browser-extension/dist/
 pnpm start            # Run built tracker (node dist/tracker.js)
 pnpm start:server     # Run built server (node dist/server.js)
 
@@ -104,6 +108,18 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`web/src/lib/api-client.ts`** — Server-side `apiClient()` (reads session, sets `X-User-Id`) and client-side `createClientApiClient()`.
 - **`web/src/app/auth/signin/`** — Sign-in page with Google, GitHub, email magic link.
 - **`web/src/app/dashboard/`** — Dashboard layout with sidebar nav + header.
+
+### Browser Extension (Phase 6 — Chrome MV3)
+
+- **`browser-extension/`** — Chrome Manifest V3 extension that tracks active tab activity.
+- **`browser-extension/src/background.ts`** — Service worker: listens to tabs.onActivated, tabs.onUpdated, windows.onFocusChanged, alarm flush every 5min.
+- **`browser-extension/src/session-manager.ts`** — Tab session tracking, heartbeat flushing, config caching.
+- **`browser-extension/src/storage.ts`** — chrome.storage wrappers (sync for config, local for session/stats).
+- **`browser-extension/src/daily-stats.ts`** — Per-domain time tracking for popup display.
+- **`browser-extension/src/heartbeat-sender.ts`** — Copied from desktop, sends heartbeats to API.
+- **`browser-extension/src/popup.ts`** — Config form, status indicator, daily stats display.
+- **`browser-extension/popup/`** — popup.html + popup.css (350px wide, dark mode support).
+- Build: `pnpm build:ext` → `browser-extension/dist/background.js` + `popup.js` (IIFE via tsup).
 
 ## TypeScript Configuration
 
