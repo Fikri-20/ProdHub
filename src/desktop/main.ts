@@ -1,6 +1,11 @@
 import os from "node:os";
 import { app, Menu, Tray, nativeImage } from "electron";
 import { activeWindow } from "get-windows";
+import {
+  configureAutoStart,
+  parseAllowDevAutoStart,
+  parseAutoStartEnabled,
+} from "./auto-start.js";
 import { createHeartbeatAgent } from "./heartbeat-agent.js";
 import { createHeartbeatSender } from "./heartbeat-sender.js";
 import {
@@ -15,6 +20,10 @@ let heartbeatAgent: ReturnType<typeof createHeartbeatAgent> | null = null;
 
 const API_URL = process.env.TRACKER_API_URL ?? "http://localhost:3000";
 const API_KEY = process.env.TRACKER_API_KEY ?? "";
+const AUTO_START_ENABLED = parseAutoStartEnabled(process.env.TRACKER_AUTO_START);
+const AUTO_START_ALLOW_DEV = parseAllowDevAutoStart(
+  process.env.TRACKER_AUTOSTART_ALLOW_DEV,
+);
 
 function parsePollInterval(value: string | undefined): number {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -94,6 +103,13 @@ function createTray() {
 
 function initializeTrayApp() {
   app.setName(DESKTOP_APP_NAME);
+
+  configureAutoStart({
+    loginItemApi: app,
+    platform: process.platform,
+    enabled: AUTO_START_ENABLED,
+    allowInDev: AUTO_START_ALLOW_DEV,
+  });
 
   if (process.platform === "darwin" && app.dock) {
     app.dock.hide();
