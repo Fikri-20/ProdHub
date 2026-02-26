@@ -52,14 +52,20 @@ export function createChromeMock() {
       onActivated: { addListener: () => {} },
       onUpdated: { addListener: () => {} },
       query: async () => [],
+      get: async (_tabId: number) => ({ incognito: false }),
     },
     windows: {
       onFocusChanged: { addListener: () => {} },
+      get: async (_windowId: number) => ({ incognito: false }),
       WINDOW_ID_NONE: -1,
     },
     alarms: {
       create: () => {},
       onAlarm: { addListener: () => {} },
+    },
+    idle: {
+      setDetectionInterval: () => {},
+      onStateChanged: { addListener: () => {} },
     },
     _resetAll: () => {
       syncStorage._reset();

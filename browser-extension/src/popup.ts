@@ -1,5 +1,6 @@
 import { loadConfig, saveConfig, loadDailyStats } from "./storage.js";
 import { getTodayTopSites, getTotalSeconds } from "./daily-stats.js";
+import { categorizeDomain } from "./domain-categories.js";
 import type { ExtensionConfig } from "./types.js";
 
 function formatTime(totalSeconds: number): string {
@@ -69,8 +70,9 @@ function renderTopSites(container: HTMLElement, stats: Awaited<ReturnType<typeof
 
     const domain = document.createElement("span");
     domain.className = "site-row__domain";
+    const category = categorizeDomain(site.domain);
     domain.textContent = site.domain;
-    domain.title = site.domain;
+    domain.title = category ? `${site.domain} (${category})` : site.domain;
 
     const barContainer = document.createElement("div");
     barContainer.className = "site-row__bar-container";

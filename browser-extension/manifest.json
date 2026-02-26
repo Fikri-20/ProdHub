@@ -3,7 +3,7 @@
   "name": "ProdHub Browser Tracker",
   "description": "Track browser activity and send heartbeats to your ProdHub dashboard",
   "version": "1.0.0",
-  "permissions": ["tabs", "activeTab", "storage", "alarms"],
+  "permissions": ["tabs", "activeTab", "storage", "alarms", "idle"],
   "background": {
     "service_worker": "dist/background.js"
   },

@@ -27,3 +27,4 @@ export const DEFAULT_CONFIG: ExtensionConfig = {
 
 export const ALARM_NAME = "prodhub-flush";
 export const ALARM_INTERVAL_MINUTES = 5;
+export const IDLE_THRESHOLD_SECONDS = 120;

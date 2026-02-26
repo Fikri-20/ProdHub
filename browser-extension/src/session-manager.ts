@@ -50,11 +50,16 @@ async function flushSession(
   const sender = getSender(config);
 
   if (sender) {
+    // Include domain in windowTitle so server-side category rules can match domains
+    const windowTitle = session.domain
+      ? `${session.domain} — ${session.title}`
+      : session.title;
+
     await sender({
       deviceName: config.deviceName,
       os: "Browser",
       appName: "Chrome",
-      windowTitle: session.title,
+      windowTitle,
       startTime: new Date(session.startTime).toISOString(),
       endTime: new Date(endTime).toISOString(),
       duration: durationSeconds,
