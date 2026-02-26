@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { LiveStatusIndicator } from "@/components/live-status/live-status-indicator";
 
 export default async function DashboardLayout({
   children,
@@ -67,11 +68,14 @@ export default async function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col">
         {/* Header */}
-        <header className="flex h-14 items-center justify-end gap-4 border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">
-            {session.user.email}
-          </span>
-          <SignOutButton />
+        <header className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <LiveStatusIndicator userId={session.user.id!} />
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              {session.user.email}
+            </span>
+            <SignOutButton />
+          </div>
         </header>
 
         {/* Page content */}

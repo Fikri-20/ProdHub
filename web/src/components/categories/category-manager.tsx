@@ -1,84 +1,129 @@
 "use client";
 
 import { useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { CategoryForm } from "./category-form";
 import type { Category, CategoryFormData } from "@/types/categories";
+import { useAuthedClientApi } from "@/hooks/use-authed-client-api";
+import {
+  createCategory,
+  deleteCategory,
+  fetchCategories,
+  queryKeys,
+  updateCategory,
+} from "@/lib/dashboard-queries";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+export function CategoryManager() {
+  const { userId, clientApi, isSessionLoading } = useAuthedClientApi();
+  const queryClient = useQueryClient();
 
-function clientFetch(userId: string, path: string, init?: RequestInit) {
-  return fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-User-Id": userId,
-      ...init?.headers,
-    },
-  });
-}
-
-interface CategoryManagerProps {
-  initialCategories: Category[];
-  userId: string;
-}
-
-export function CategoryManager({ initialCategories, userId }: CategoryManagerProps) {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const categoriesQuery = useQuery({
+    queryKey: userId ? queryKeys.categories(userId) : ["categories", "anonymous"],
+    queryFn: () => fetchCategories(clientApi!),
+    enabled: Boolean(userId && clientApi),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CategoryFormData) => {
+      if (!clientApi) throw new Error("Not authenticated");
+      return createCategory(clientApi, data);
+    },
+    onSuccess: (created) => {
+      if (!userId) return;
+      queryClient.setQueryData(queryKeys.categories(userId), (previous: Category[] = []) =>
+        [...previous, created].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setShowForm(false);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CategoryFormData }) => {
+      if (!clientApi) throw new Error("Not authenticated");
+      return updateCategory(clientApi, id, data);
+    },
+    onSuccess: (updated) => {
+      if (!userId) return;
+      queryClient.setQueryData(queryKeys.categories(userId), (previous: Category[] = []) =>
+        previous
+          .map((category) => (category.id === updated.id ? updated : category))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setEditingCategory(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!clientApi) throw new Error("Not authenticated");
+      setDeleting(id);
+      await deleteCategory(clientApi, id);
+      return id;
+    },
+    onSuccess: (deletedId) => {
+      if (!userId) return;
+      queryClient.setQueryData(queryKeys.categories(userId), (previous: Category[] = []) =>
+        previous.filter((category) => category.id !== deletedId),
+      );
+    },
+    onSettled: () => {
+      setDeleting(null);
+    },
+  });
+
   async function handleCreate(data: CategoryFormData) {
-    const res = await clientFetch(userId, "/api/categories", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error((body as { error?: string }).error ?? `Failed to create (${res.status})`);
-    }
-
-    const created = (await res.json()) as Category;
-    setCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
-    setShowForm(false);
+    await createMutation.mutateAsync(data);
   }
 
   async function handleUpdate(data: CategoryFormData) {
     if (!editingCategory) return;
-
-    const res = await clientFetch(userId, `/api/categories/${editingCategory.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error((body as { error?: string }).error ?? `Failed to update (${res.status})`);
-    }
-
-    const updated = (await res.json()) as Category;
-    setCategories((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c)).sort((a, b) => a.name.localeCompare(b.name)),
-    );
-    setEditingCategory(null);
+    await updateMutation.mutateAsync({ id: editingCategory.id, data });
   }
 
   async function handleDelete(id: string) {
-    setDeleting(id);
-    try {
-      const res = await clientFetch(userId, `/api/categories/${id}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) {
-        throw new Error(`Failed to delete (${res.status})`);
-      }
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-    } finally {
-      setDeleting(null);
-    }
+    await deleteMutation.mutateAsync(id);
   }
 
-  // Show form for creating or editing
+  if (isSessionLoading || categoriesQuery.isPending) {
+    return (
+      <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Loading categories...
+        </p>
+      </div>
+    );
+  }
+
+  if (!clientApi || !userId) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Not authenticated
+        </p>
+      </div>
+    );
+  }
+
+  if (categoriesQuery.error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+        <p className="text-sm text-red-600 dark:text-red-400">
+          {categoriesQuery.error.message}
+        </p>
+      </div>
+    );
+  }
+
+  const categories = categoriesQuery.data ?? [];
+
   if (showForm) {
     return (
       <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
@@ -105,7 +150,6 @@ export function CategoryManager({ initialCategories, userId }: CategoryManagerPr
 
   return (
     <div className="space-y-4">
-      {/* Create button */}
       <div className="flex justify-end">
         <button
           onClick={() => setShowForm(true)}
@@ -118,7 +162,6 @@ export function CategoryManager({ initialCategories, userId }: CategoryManagerPr
         </button>
       </div>
 
-      {/* Empty state */}
       {categories.length === 0 ? (
         <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
           <svg className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -131,24 +174,24 @@ export function CategoryManager({ initialCategories, userId }: CategoryManagerPr
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
+          {categories.map((category) => (
             <div
-              key={cat.id}
+              key={category.id}
               className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
                   <span
                     className="inline-block h-4 w-4 rounded-full border border-zinc-200 dark:border-zinc-700"
-                    style={{ backgroundColor: cat.color }}
+                    style={{ backgroundColor: category.color }}
                   />
-                  <h3 className="font-medium text-zinc-900 dark:text-zinc-50">{cat.name}</h3>
+                  <h3 className="font-medium text-zinc-900 dark:text-zinc-50">{category.name}</h3>
                 </div>
                 <div className="flex gap-1">
                   <button
-                    onClick={() => setEditingCategory(cat)}
+                    onClick={() => setEditingCategory(category)}
                     className="rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
-                    aria-label={`Edit ${cat.name}`}
+                    aria-label={`Edit ${category.name}`}
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -156,15 +199,15 @@ export function CategoryManager({ initialCategories, userId }: CategoryManagerPr
                   </button>
                   <button
                     onClick={() => {
-                      if (window.confirm(`Delete "${cat.name}"? This cannot be undone.`)) {
-                        handleDelete(cat.id);
+                      if (window.confirm(`Delete "${category.name}"? This cannot be undone.`)) {
+                        handleDelete(category.id);
                       }
                     }}
-                    disabled={deleting === cat.id}
+                    disabled={deleting === category.id}
                     className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950 dark:hover:text-red-400"
-                    aria-label={`Delete ${cat.name}`}
+                    aria-label={`Delete ${category.name}`}
                   >
-                    {deleting === cat.id ? (
+                    {deleting === category.id ? (
                       <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -178,11 +221,11 @@ export function CategoryManager({ initialCategories, userId }: CategoryManagerPr
                 </div>
               </div>
 
-              {cat.rules.length > 0 && (
+              {category.rules.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {cat.rules.map((rule, i) => (
+                  {category.rules.map((rule, index) => (
                     <code
-                      key={i}
+                      key={index}
                       className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                     >
                       {rule}

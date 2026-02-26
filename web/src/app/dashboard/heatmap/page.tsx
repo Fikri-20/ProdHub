@@ -1,29 +1,36 @@
-import { apiClient } from "@/lib/api-client";
-import { buildHeatmapGrid } from "@/lib/heatmap-utils";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { HeatmapGrid } from "@/components/heatmap/heatmap-grid";
-import type { HeatmapDay } from "@/types/heatmap";
+import { useAuthedClientApi } from "@/hooks/use-authed-client-api";
+import { fetchHeatmap, queryKeys } from "@/lib/dashboard-queries";
+import { buildHeatmapGrid } from "@/lib/heatmap-utils";
+import HeatmapLoading from "./loading";
 
-async function fetchHeatmapData(): Promise<HeatmapDay[]> {
-  const res = await apiClient("/api/heatmap", { cache: "no-store" });
+export default function HeatmapPage() {
+  const { clientApi, userId, isSessionLoading } = useAuthedClientApi();
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch heatmap data: ${res.status}`);
+  const heatmapQuery = useQuery({
+    queryKey: userId ? queryKeys.heatmap(userId) : ["heatmap", "anonymous"],
+    queryFn: () => fetchHeatmap(clientApi!),
+    enabled: Boolean(clientApi && userId),
+  });
+
+  if (isSessionLoading || heatmapQuery.isPending) {
+    return <HeatmapLoading />;
   }
 
-  return res.json() as Promise<HeatmapDay[]>;
-}
-
-export default async function HeatmapPage() {
-  let data: HeatmapDay[];
-  let error: string | null = null;
-
-  try {
-    data = await fetchHeatmapData();
-  } catch (e) {
-    data = [];
-    error = e instanceof Error ? e.message : "Failed to load heatmap data";
+  if (!clientApi || !userId) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Not authenticated
+        </p>
+      </div>
+    );
   }
 
+  const data = heatmapQuery.data ?? [];
   const gridData = buildHeatmapGrid(data);
   const totalDuration = data.reduce((sum, d) => sum + d.totalDuration, 0);
   const activeDays = data.filter((d) => d.totalDuration > 0).length;
@@ -34,9 +41,11 @@ export default async function HeatmapPage() {
         Activity Heatmap
       </h2>
 
-      {error ? (
+      {heatmapQuery.error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">
+            {heatmapQuery.error.message}
+          </p>
         </div>
       ) : (
         <HeatmapGrid

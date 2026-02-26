@@ -27,24 +27,3 @@ export async function apiClient(
     },
   });
 }
-
-/**
- * Client-side API client factory.
- * Use in Client Components where userId is passed from the session context.
- */
-export function createClientApiClient(userId: string) {
-  return async function clientFetch(
-    path: string,
-    init?: RequestInit,
-  ): Promise<Response> {
-    const url = `${API_BASE_URL}${path}`;
-    return fetch(url, {
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Id": userId,
-        ...init?.headers,
-      },
-    });
-  };
-}

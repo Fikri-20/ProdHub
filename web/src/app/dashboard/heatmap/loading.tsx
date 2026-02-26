@@ -1,3 +1,9 @@
+"use client";
+
+const MONTH_MARGIN_RIGHT = [
+  24, 31, 27, 38, 26, 35, 29, 33, 25, 37, 28, 32,
+] as const;
+
 export default function HeatmapLoading() {
   return (
     <div className="space-y-6">
@@ -12,7 +18,7 @@ export default function HeatmapLoading() {
             <div
               key={i}
               className="h-3 w-12 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"
-              style={{ marginRight: `${Math.random() * 20 + 20}px` }}
+              style={{ marginRight: `${MONTH_MARGIN_RIGHT[i] ?? 24}px` }}
             />
           ))}
         </div>

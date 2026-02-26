@@ -93,6 +93,26 @@ const eventRoutes = async (app: FastifyInstance) => {
     return reply.send(events);
   });
 
+  // GET /api/events/latest — most recent event for the authenticated user
+  app.get("/latest", async (request, reply) => {
+    const userId = request.userId;
+
+    const event = await prisma.activityEvent.findFirst({
+      where: { device: { userId } },
+      orderBy: { startTime: "desc" },
+      include: {
+        device: true,
+        categories: { include: { category: true } },
+      },
+    });
+
+    if (!event) {
+      return reply.status(204).send();
+    }
+
+    return reply.send(event);
+  });
+
   // GET /api/events/health — simple health check (no rate limit)
   app.get("/health", { config: { rateLimit: false } }, async (_request, reply) => {
     return reply.send({ status: "ok" });

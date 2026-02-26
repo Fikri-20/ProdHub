@@ -101,8 +101,8 @@ main ← stable releases
 | TICKET-011 | 4.3 Summary View — pie chart + bar chart with date range picker              | ✅ Complete |
 | TICKET-012 | 4.4 GitHub-style Heatmap — calendar grid, category filter, intensity shading | ✅ Complete |
 | TICKET-013 | 4.5 Category Manager — CRUD categories, regex rules, color picker            | ✅ Complete |
-| TICKET-014 | 4.6 Live Status indicator — poll every 10s for current activity              | Pending     |
-| TICKET-015 | 4.7 TanStack Query for all data fetching                                     | Pending     |
+| TICKET-014 | 4.6 Live Status indicator — poll every 10s for current activity              | ✅ Complete |
+| TICKET-015 | 4.7 TanStack Query for all data fetching                                     | ✅ Complete |
 
 **Milestone:** Authenticated dashboard showing timeline, summary, heatmap, categories, and live status.
 

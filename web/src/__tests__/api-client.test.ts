@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Session } from "next-auth";
 
-// Mock fetch globally
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
 
-// Mock the auth module to avoid importing Next.js internals
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
 }));
@@ -20,10 +19,16 @@ describe("apiClient (server-side)", () => {
     const { apiClient } = await import("@/lib/api-client");
     const mockedAuth = vi.mocked(auth);
 
-    mockedAuth.mockResolvedValue({
-      user: { id: "user-123", email: "test@example.com" },
-      expires: new Date(Date.now() + 86400000).toISOString(),
-    } as any);
+    const session: Session = {
+      user: {
+        id: "user-123",
+        email: "test@example.com",
+        name: null,
+        image: null,
+      },
+      expires: new Date(Date.now() + 86_400_000).toISOString(),
+    };
+    mockedAuth.mockResolvedValue(session);
 
     await apiClient("/api/events");
 
@@ -41,7 +46,7 @@ describe("apiClient (server-side)", () => {
     const { apiClient } = await import("@/lib/api-client");
     const mockedAuth = vi.mocked(auth);
 
-    mockedAuth.mockResolvedValue(null as any);
+    mockedAuth.mockResolvedValue(null);
 
     await expect(apiClient("/api/events")).rejects.toThrow("Not authenticated");
   });
@@ -54,8 +59,7 @@ describe("createClientApiClient", () => {
   });
 
   it("should create a fetch function that sets X-User-Id header", async () => {
-    // Dynamic import to avoid module-level side effects
-    const { createClientApiClient } = await import("@/lib/api-client");
+    const { createClientApiClient } = await import("@/lib/client-api");
 
     const userId = "test-user-uuid-123";
     const clientFetch = createClientApiClient(userId);
@@ -73,7 +77,7 @@ describe("createClientApiClient", () => {
   });
 
   it("should set the correct base URL", async () => {
-    const { createClientApiClient } = await import("@/lib/api-client");
+    const { createClientApiClient } = await import("@/lib/client-api");
 
     const clientFetch = createClientApiClient("user-1");
     await clientFetch("/api/summary?groupBy=app");
@@ -83,7 +87,7 @@ describe("createClientApiClient", () => {
   });
 
   it("should merge custom headers with default headers", async () => {
-    const { createClientApiClient } = await import("@/lib/api-client");
+    const { createClientApiClient } = await import("@/lib/client-api");
 
     const clientFetch = createClientApiClient("user-2");
     await clientFetch("/api/events", {

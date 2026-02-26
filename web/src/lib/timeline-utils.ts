@@ -38,6 +38,30 @@ export function formatTime(isoString: string): string {
 }
 
 /**
+ * Format an ISO date string to a relative time string like "2m ago", "1h 15m ago".
+ */
+export function formatRelativeTime(isoString: string): string {
+  const elapsed = Math.floor(
+    (Date.now() - new Date(isoString).getTime()) / 1000,
+  );
+
+  if (elapsed < 60) {
+    return "just now";
+  }
+
+  const hours = Math.floor(elapsed / 3600);
+  const minutes = Math.floor((elapsed % 3600) / 60);
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m ago`;
+  }
+  if (hours > 0) {
+    return `${hours}h ago`;
+  }
+  return `${minutes}m ago`;
+}
+
+/**
  * Format an ISO date string to a full date label like "Monday, February 24, 2026".
  */
 export function formatDateLabel(isoString: string): string {
