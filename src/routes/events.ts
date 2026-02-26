@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import prisma from "../lib/prisma.js";
+import { hashApiKey } from "../lib/api-key.js";
 import { categorizeEvent } from "../services/categorization.js";
 import { heartbeatBodySchema, eventsQuerySchema } from "../schemas/events.js";
 
@@ -113,9 +114,26 @@ const eventRoutes = async (app: FastifyInstance) => {
     return reply.send(event);
   });
 
-  // GET /api/events/health — simple health check (no rate limit)
-  app.get("/health", { config: { rateLimit: false } }, async (_request, reply) => {
-    return reply.send({ status: "ok" });
+  // GET /api/events/health — validates API key and returns status
+  app.get("/health", { config: { rateLimit: false } }, async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return reply.send({ status: "ok", authenticated: false });
+    }
+
+    const rawKey = authHeader.slice(7);
+    if (!rawKey) {
+      return reply.send({ status: "ok", authenticated: false });
+    }
+
+    const hash = hashApiKey(rawKey);
+    const apiKey = await prisma.apiKey.findUnique({ where: { key: hash } });
+
+    if (!apiKey || apiKey.revokedAt) {
+      return reply.status(401).send({ status: "error", error: "Invalid or revoked API key" });
+    }
+
+    return reply.send({ status: "ok", authenticated: true });
   });
 };
 
