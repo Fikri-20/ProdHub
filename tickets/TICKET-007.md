@@ -1,6 +1,6 @@
 # TICKET-007: Tenant Isolation — All Queries Scoped to User
 
-## Status: `implemented`
+## Status: `review-failed`
 
 ## Priority: P0
 
@@ -68,9 +68,14 @@ Audit and harden tenant isolation across all API endpoints. Ensure no query can 
 
 - Depends on: TICKET-005, TICKET-006
 
+## Review Report
+
+- Review: /reviews/REVIEW_007.md
+
 ## Status History
 
 | Date       | From         | To           | By          | Notes                       |
 | ---------- | ------------ | ------------ | ----------- | --------------------------- |
 | 2026-02-24 | —            | implementing | Antigravity | Audit + isolation hardening |
 | 2026-02-24 | implementing | implemented  | Claude      | Health exclusion + 18 isolation tests |
+| 2026-02-25 | implemented  | review-failed | Codex      | See /reviews/REVIEW_007.md (missing linked spec file) |

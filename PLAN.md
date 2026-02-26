@@ -112,13 +112,13 @@ main ← stable releases
 
 **Goal:** Lightweight system tray app that sends heartbeats to the hosted API.
 
-| Ticket     | Task                                                    | Status  |
-| ---------- | ------------------------------------------------------- | ------- |
+| Ticket     | Task                                                    | Status      |
+| ---------- | ------------------------------------------------------- | ----------- |
 | TICKET-016 | 5.1 Electron app — system tray only, no embedded server | ✅ Complete |
 | TICKET-017 | 5.2 Heartbeat sender — POST to hosted API via API key   | ✅ Complete |
 | TICKET-018 | 5.3 Auto-start on OS login                              | ✅ Complete |
-| TICKET-019 | 5.4 Tray menu: pause tracking, open dashboard, settings | Pending |
-| TICKET-020 | 5.5 Windows installer (macOS/Linux later)               | Pending |
+| TICKET-019 | 5.4 Tray menu: pause tracking, open dashboard, settings | ✅ Complete |
+| TICKET-020 | 5.5 Windows installer (macOS/Linux later)               | ✅ Complete |
 
 **Milestone:** Install agent → auto-starts in tray → tracks activity → data appears in web dashboard.
 

@@ -1,6 +1,6 @@
 # TICKET-012: GitHub-style Activity Heatmap
 
-**Status:** `implemented`
+**Status:** `review-failed`
 **Phase:** 4 — Next.js Dashboard
 **Depends on:** TICKET-009, TICKET-010
 
@@ -38,3 +38,13 @@ Add a GitHub-style activity heatmap at `/dashboard/heatmap` showing ~52 weeks of
 
 - `src/server.ts` — registered `/api/heatmap` route
 - `web/src/app/dashboard/layout.tsx` — added Heatmap nav link
+
+## Review Report
+
+- Review: /reviews/REVIEW_012.md
+
+## Status History
+
+| Date       | From        | To            | By    | Notes |
+| ---------- | ----------- | ------------- | ----- | ----- |
+| 2026-02-25 | implemented | review-failed | Codex | See /reviews/REVIEW_012.md (missing spec, missing tests, lint failure) |

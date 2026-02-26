@@ -1,6 +1,6 @@
 # TICKET-006: API Key Auth for Desktop Agents
 
-## Status: `implemented`
+## Status: `review-failed`
 
 ## Priority: P0
 
@@ -38,6 +38,10 @@ Replace the temporary X-User-Id header with proper API key authentication. Deskt
 - Depends on: TICKET-005 (User model)
 - Blocks: TICKET-007 (tenant isolation audit)
 
+## Review Report
+
+- Review: /reviews/REVIEW_006.md
+
 ## Status History
 
 | Date       | From         | To           | By          | Notes                                       |
@@ -45,3 +49,4 @@ Replace the temporary X-User-Id header with proper API key authentication. Deskt
 | 2026-02-24 | —            | draft        | Antigravity | Ticket created                              |
 | 2026-02-24 | draft        | implementing | Antigravity | Implementation started                      |
 | 2026-02-24 | implementing | implemented  | Antigravity | 65 tests pass, tsc 0 errors, build succeeds |
+| 2026-02-25 | implemented  | review-failed | Codex      | See /reviews/REVIEW_006.md (key-management routes accept Bearer auth) |

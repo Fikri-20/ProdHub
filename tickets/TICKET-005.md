@@ -1,6 +1,6 @@
 # TICKET-005: User Model in Prisma + Relate All Data to userId
 
-## Status: `implemented`
+## Status: `approved`
 
 ## Priority: P0
 
@@ -38,6 +38,10 @@ Add a User model to the Prisma schema and relate Device and Category to userId, 
 - Depends on: TICKET-002 (Zod validation)
 - Blocks: TICKET-006 (API key auth), TICKET-007 (tenant isolation), TICKET-008 (rate limiting)
 
+## Review Report
+
+- Review: /reviews/REVIEW_005.md
+
 ## Status History
 
 | Date       | From         | To           | By          | Notes                                           |
@@ -45,3 +49,4 @@ Add a User model to the Prisma schema and relate Device and Category to userId, 
 | 2026-02-24 | —            | draft        | Antigravity | Ticket created from PLAN scope                  |
 | 2026-02-24 | draft        | implementing | Antigravity | Implementation started                          |
 | 2026-02-24 | implementing | implemented  | Antigravity | All 52 tests pass, tsc 0 errors, build succeeds |
+| 2026-02-25 | implemented  | approved     | Codex      | See /reviews/REVIEW_005.md |

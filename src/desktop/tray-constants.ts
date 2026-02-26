@@ -1,4 +1,9 @@
 export const DESKTOP_APP_NAME = "ProdHub Agent";
 export const TRAY_TOOLTIP = "ProdHub agent is running";
-export const TRAY_STATUS_LABEL = "Tracking is enabled";
+export const TRAY_STATUS_ACTIVE_LABEL = "Tracking: Active";
+export const TRAY_STATUS_PAUSED_LABEL = "Tracking: Paused";
+export const TRAY_TOGGLE_PAUSE_LABEL = "Pause Tracking";
+export const TRAY_TOGGLE_RESUME_LABEL = "Resume Tracking";
+export const TRAY_OPEN_DASHBOARD_LABEL = "Open Dashboard";
+export const TRAY_OPEN_SETTINGS_LABEL = "Settings";
 export const TRAY_QUIT_LABEL = "Quit";

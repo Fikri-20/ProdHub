@@ -1,7 +1,7 @@
 # TICKET-010: Timeline View
 
 **Phase:** 4 — Next.js Dashboard
-**Status:** `implemented`
+**Status:** `review-failed`
 **Depends On:** TICKET-009
 
 ## Description
@@ -35,3 +35,13 @@ Wire up the Timeline View on the dashboard — a vertical timeline of activity e
 - [x] Empty state shown when no events match the selected range
 - [x] Error state shown when API request fails
 - [x] `pnpm build` in `web/` compiles without errors
+
+## Review Report
+
+- Review: /reviews/REVIEW_010.md
+
+## Status History
+
+| Date       | From        | To            | By    | Notes |
+| ---------- | ----------- | ------------- | ----- | ----- |
+| 2026-02-25 | implemented | review-failed | Codex | See /reviews/REVIEW_010.md (missing spec + missing timeline tests) |

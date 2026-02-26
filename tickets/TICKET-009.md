@@ -1,7 +1,7 @@
 # TICKET-009: Next.js App Router Scaffold + Auth.js
 
 **Phase:** 4 — Next.js Dashboard
-**Status:** `implemented`
+**Status:** `review-failed`
 **Depends On:** TICKET-006
 
 ## Description
@@ -52,3 +52,13 @@ Scaffold the Next.js dashboard in `web/` with Auth.js for Google, GitHub, and Em
 - [x] Sign-in page shows Google, GitHub, Email options
 - [x] Dashboard layout has sidebar and header with sign-out
 - [x] API client tests pass
+
+## Review Report
+
+- Review: /reviews/REVIEW_009.md
+
+## Status History
+
+| Date       | From        | To            | By     | Notes |
+| ---------- | ----------- | ------------- | ------ | ----- |
+| 2026-02-25 | implemented | review-failed | Codex  | See /reviews/REVIEW_009.md (missing spec + web lint failure) |

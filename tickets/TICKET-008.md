@@ -1,6 +1,6 @@
 # TICKET-008: Rate Limiting + CORS
 
-## Status: `implemented`
+## Status: `review-failed`
 
 ## Priority: P0
 
@@ -68,9 +68,14 @@ Add rate limiting and CORS configuration to protect the API from abuse and prepa
 
 - Depends on: TICKET-005, TICKET-006, TICKET-007
 
+## Review Report
+
+- Review: /reviews/REVIEW_008.md
+
 ## Status History
 
 | Date       | From         | To           | By     | Notes                              |
 | ---------- | ------------ | ------------ | ------ | ---------------------------------- |
 | 2026-02-24 | —            | implementing | Claude | Rate limiting + CORS implementation |
 | 2026-02-24 | implementing | implemented  | Claude | All 6 tests passing                |
+| 2026-02-25 | implemented  | review-failed | Codex | See /reviews/REVIEW_008.md (missing linked spec file) |

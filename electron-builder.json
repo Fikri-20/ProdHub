@@ -1,0 +1,34 @@
+{
+  "appId": "com.prodhub.agent",
+  "productName": "ProdHub Agent",
+  "electronVersion": "40.6.1",
+  "asar": true,
+  "asarUnpack": ["**/get-windows/**", "**/node-pre-gyp/**", "**/*.node", "icon.png"],
+  "npmRebuild": false,
+  "buildDependenciesFromSource": false,
+  "directories": {
+    "output": "../../release/desktop-installer"
+  },
+  "files": ["**/*"],
+  "extraMetadata": {
+    "main": "main.js"
+  },
+  "win": {
+    "signAndEditExecutable": false,
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "ProdHub-Agent-Setup-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": false,
+    "createStartMenuShortcut": true,
+    "shortcutName": "ProdHub Agent"
+  }
+}

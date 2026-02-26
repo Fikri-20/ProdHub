@@ -29,6 +29,7 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 4.3 Summary View — TICKET-011
   - [x] 4.4 GitHub-style Heatmap — TICKET-012
   - [x] 4.5 Category Manager — TICKET-013
+  - [x] 4.6 Live Status Indicator — TICKET-014
 - **Phase 5 (not started):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
 - **Phase 6 (not started):** Browser Extension (TICKET-021 through TICKET-025)
 - **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
