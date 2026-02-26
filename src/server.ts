@@ -37,7 +37,29 @@ app.setErrorHandler(function (error, _request, reply) {
 
 // CORS — register before auth so preflight OPTIONS requests work
 app.register(cors, {
-  origin: process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"],
+  origin: (origin, cb) => {
+    const allowed = process.env.CORS_ORIGIN?.split(",") ?? ["http://localhost:3000"];
+
+    // Allow requests with no origin (e.g. server-to-server, curl)
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+
+    // Allow configured origins
+    if (allowed.includes(origin)) {
+      cb(null, true);
+      return;
+    }
+
+    // Allow Chrome extension origins (chrome-extension://*)
+    if (origin.startsWith("chrome-extension://")) {
+      cb(null, true);
+      return;
+    }
+
+    cb(new Error("Not allowed by CORS"), false);
+  },
   credentials: true,
 });
 
