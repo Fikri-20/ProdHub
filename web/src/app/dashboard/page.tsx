@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { DateRangePicker } from "@/components/timeline/date-range-picker";
+import { ExportButton } from "@/components/timeline/export-button";
 import { TimelineList } from "@/components/timeline/timeline-list";
 import { useAuthedClientApi } from "@/hooks/use-authed-client-api";
-import { fetchEvents, queryKeys } from "@/lib/dashboard-queries";
+import { fetchEvents, fetchEventsCustomRange, queryKeys } from "@/lib/dashboard-queries";
 import { groupEventsByDay } from "@/lib/timeline-utils";
 import type { DateRangePreset } from "@/types/events";
 import DashboardLoading from "./loading";
@@ -19,14 +20,26 @@ function isValidPreset(value: string): value is DateRangePreset {
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const rangeParam = searchParams.get("range") ?? "today";
+  const isCustom = rangeParam === "custom";
+  const customFrom = searchParams.get("from") ?? "";
+  const customTo = searchParams.get("to") ?? "";
   const range: DateRangePreset = isValidPreset(rangeParam) ? rangeParam : "today";
 
   const { clientApi, userId, isSessionLoading } = useAuthedClientApi();
 
   const eventsQuery = useQuery({
-    queryKey: userId ? queryKeys.events(userId, range) : ["events", "anonymous", range],
-    queryFn: () => fetchEvents(clientApi!, range),
-    enabled: Boolean(clientApi && userId),
+    queryKey: userId
+      ? isCustom
+        ? ["events", userId, "custom", customFrom, customTo]
+        : queryKeys.events(userId, range)
+      : ["events", "anonymous"],
+    queryFn: () => {
+      if (isCustom && customFrom && customTo) {
+        return fetchEventsCustomRange(clientApi!, customFrom, customTo);
+      }
+      return fetchEvents(clientApi!, range);
+    },
+    enabled: Boolean(clientApi && userId && (!isCustom || (customFrom && customTo))),
   });
 
   if (isSessionLoading || eventsQuery.isPending) {
@@ -69,7 +82,10 @@ export default function DashboardPage() {
         <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Timeline
         </h2>
-        <DateRangePicker />
+        <div className="flex gap-3">
+          <ExportButton range={range} userId={userId} customFrom={customFrom} customTo={customTo} isCustom={isCustom} />
+          <DateRangePicker />
+        </div>
       </div>
 
       <TimelineList groups={groups} />

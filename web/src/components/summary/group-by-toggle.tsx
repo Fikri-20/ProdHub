@@ -6,6 +6,7 @@ import type { SummaryGroupBy } from "@/types/summary";
 const options: { label: string; value: SummaryGroupBy }[] = [
   { label: "By App", value: "app" },
   { label: "By Category", value: "category" },
+  { label: "By Project", value: "project" },
 ];
 
 export function GroupByToggle() {

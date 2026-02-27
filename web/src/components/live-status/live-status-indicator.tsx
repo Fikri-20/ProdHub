@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClientApiClient } from "@/lib/client-api";
 import { fetchLatestEvent, queryKeys } from "@/lib/dashboard-queries";
 import { formatRelativeTime } from "@/lib/timeline-utils";
@@ -13,9 +13,53 @@ interface LiveStatusIndicatorProps {
   userId: string;
 }
 
+function useWebSocket(userId: string) {
+  const queryClient = useQueryClient();
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    const wsUrl = `${(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000").replace(/^http/, "ws")}/ws`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data as string) as { type: string; event: unknown };
+        if (data.type === "heartbeat") {
+          // Update the latest event cache immediately
+          queryClient.setQueryData(queryKeys.latestEvent(userId), data.event);
+          // Also invalidate timeline/summary queries so they refetch
+          queryClient.invalidateQueries({ queryKey: ["events", userId] });
+          queryClient.invalidateQueries({ queryKey: ["summary", userId] });
+        }
+      } catch {
+        // Ignore malformed messages
+      }
+    };
+
+    ws.onclose = () => {
+      // Reconnect after 5 seconds
+      setTimeout(() => {
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
+      }, 5000);
+    };
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [userId, queryClient]);
+}
+
 export function LiveStatusIndicator({ userId }: LiveStatusIndicatorProps) {
   const clientApi = useMemo(() => createClientApiClient(userId), [userId]);
 
+  // WebSocket for real-time updates
+  useWebSocket(userId);
+
+  // Fallback polling (slower interval since WS handles real-time)
   const latestEventQuery = useQuery({
     queryKey: queryKeys.latestEvent(userId),
     queryFn: () => fetchLatestEvent(clientApi),

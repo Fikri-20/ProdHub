@@ -1,5 +1,6 @@
 import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
+import websocket from "@fastify/websocket";
 import rateLimit from "@fastify/rate-limit";
 import {
   serializerCompiler,
@@ -13,6 +14,10 @@ import categoryRoutes from "./routes/categories.js";
 import summaryRoutes from "./routes/summary.js";
 import heatmapRoutes from "./routes/heatmap.js";
 import keyRoutes from "./routes/keys.js";
+import wsRoutes from "./routes/ws.js";
+import exportRoutes from "./routes/export.js";
+import goalRoutes from "./routes/goals.js";
+import reportRoutes from "./routes/reports.js";
 
 const app = Fastify({ logger: true });
 
@@ -64,6 +69,8 @@ app.register(cors, {
     cb(new Error("Not allowed by CORS"), false);
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-User-Id"],
 });
 
 // Register user identification middleware (pre-auth, X-User-Id header)
@@ -80,12 +87,19 @@ app.register(rateLimit, {
   },
 });
 
+// WebSocket support
+app.register(websocket);
+
 // Register route plugins
 app.register(eventRoutes, { prefix: "/api/events" });
 app.register(categoryRoutes, { prefix: "/api/categories" });
 app.register(summaryRoutes, { prefix: "/api/summary" });
 app.register(heatmapRoutes, { prefix: "/api/heatmap" });
 app.register(keyRoutes, { prefix: "/api/keys" });
+app.register(exportRoutes, { prefix: "/api/export" });
+app.register(goalRoutes, { prefix: "/api/goals" });
+app.register(reportRoutes, { prefix: "/api/reports" });
+app.register(wsRoutes, { prefix: "/ws" });
 
 // Disconnect Prisma when the server shuts down
 app.addHook("onClose", async () => {

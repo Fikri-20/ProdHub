@@ -4,4 +4,4 @@ export interface SummaryItem {
   percentage: number; // 0-100
 }
 
-export type SummaryGroupBy = "app" | "category";
+export type SummaryGroupBy = "app" | "category" | "project";

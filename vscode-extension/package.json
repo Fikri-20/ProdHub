@@ -1,0 +1,62 @@
+{
+  "name": "prodhub-vscode",
+  "displayName": "ProdHub",
+  "description": "Track coding activity and send heartbeats to ProdHub",
+  "version": "0.1.0",
+  "publisher": "prodhub",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "ProdHub",
+      "properties": {
+        "prodhub.apiBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL of the ProdHub API server"
+        },
+        "prodhub.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authenticating with ProdHub"
+        },
+        "prodhub.deviceName": {
+          "type": "string",
+          "default": "",
+          "description": "Device name (defaults to hostname if empty)"
+        },
+        "prodhub.trackingEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable activity tracking"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "prodhub.toggleTracking",
+        "title": "ProdHub: Toggle Tracking"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

@@ -26,6 +26,7 @@ model User {
   apiKeys    ApiKey[]
   accounts   Account[]
   sessions   Session[]
+  goals      Goal[]
 
   @@map("users")
 }
@@ -129,6 +130,20 @@ model ActivityEvent {
   @@index([startTime])
   @@index([appName])
   @@map("activity_events")
+}
+
+model Goal {
+  id            String @id @default(uuid())
+  userId        String @map("user_id")
+  name          String
+  targetSeconds Int    @map("target_seconds") // daily target in seconds
+  appFilter     String? @map("app_filter")    // optional app name filter (null = all activity)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId])
+  @@map("goals")
 }
 
 model CategoryAssignment {

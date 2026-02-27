@@ -31,11 +31,24 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 4.5 Category Manager — TICKET-013
   - [x] 4.6 Live Status Indicator — TICKET-014
 - **Phase 5 (complete):** Desktop Agent / Electron (TICKET-016 through TICKET-020)
-- **Phase 6 (complete):** Browser Extension (TICKET-021 through TICKET-023)
+  - [x] 5.1 Electron tray app — TICKET-016
+  - [x] 5.2 Heartbeat sender — TICKET-017
+  - [x] 5.3 Auto-start on OS login — TICKET-018
+  - [x] 5.4 Tray menu — TICKET-019
+  - [x] 5.5 Windows installer — TICKET-020
+- **Phase 6 (complete):** Browser Extension (TICKET-021 through TICKET-025)
   - [x] 6.1 Extension scaffold + manifest + build pipeline — TICKET-021
   - [x] 6.2 Active tab detection + heartbeat sending — TICKET-022
   - [x] 6.3 Popup UI with config, status, daily stats — TICKET-023
-- **Phase 7 (not started):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
+  - [x] 6.4 URL domain categorization — TICKET-024
+  - [x] 6.5 Edge cases — incognito, idle, multiple windows — TICKET-025
+- **Phase 7 (complete):** Editor Plugins + Polish (TICKET-026 through TICKET-031)
+  - [x] 7.1 VS Code extension — heartbeats with file, language, project — TICKET-026
+  - [x] 7.2 Projects dimension in data model + dashboard — TICKET-027
+  - [x] 7.3 WebSocket support for real-time dashboard — TICKET-028
+  - [x] 7.4 Data export (JSON, CSV) and import — TICKET-029
+  - [x] 7.5 Goals feature — daily targets + progress tracking — TICKET-030
+  - [x] 7.6 Reports page — weekly/monthly summaries — TICKET-031
 - **Phase 8 (not started):** Deployment + SaaS Infrastructure (TICKET-032 through TICKET-035)
 
 ## Commands
@@ -47,6 +60,7 @@ pnpm dev:server       # Run Fastify server in watch mode (tsx --watch src/server
 pnpm dev:web          # Run Next.js dashboard in watch mode (port 3001)
 pnpm build            # Bundle with tsup → dist/ (ESM)
 pnpm build:ext        # Build browser extension → browser-extension/dist/
+pnpm build:vscode     # Build VS Code extension → vscode-extension/dist/
 pnpm start            # Run built tracker (node dist/tracker.js)
 pnpm start:server     # Run built server (node dist/server.js)
 
@@ -82,6 +96,11 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/routes/events.ts`** — Event routes: `POST /api/events/heartbeat` (ingest + device upsert), `GET /api/events` (query with filters/pagination).
 - **`src/routes/categories.ts`** — Categories CRUD at `/api/categories` (GET list, POST create, GET/:id, PATCH/:id, DELETE/:id).
 - **`src/routes/summary.ts`** — `GET /api/summary?groupBy=app|category` (aggregated durations).
+- **`src/routes/goals.ts`** — Goals CRUD: daily targets and progress tracking.
+- **`src/routes/reports.ts`** — Reports API: weekly/monthly summary generation.
+- **`src/routes/export.ts`** — Data export (JSON, CSV) and import endpoints.
+- **`src/routes/ws.ts`** — WebSocket upgrade route for real-time dashboard updates.
+- **`src/services/ws-broadcast.ts`** — WebSocket broadcast service for pushing events to connected clients.
 
 ### Database (PostgreSQL + Prisma)
 
@@ -121,6 +140,16 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`browser-extension/popup/`** — popup.html + popup.css (350px wide, dark mode support).
 - Build: `pnpm build:ext` → `browser-extension/dist/background.js` + `popup.js` (IIFE via tsup).
 
+### VS Code Extension (Phase 7)
+
+- **`vscode-extension/`** — VS Code extension that tracks coding activity (file, language, project) and sends heartbeats.
+- **`vscode-extension/src/extension.ts`** — activate/deactivate: wires editor events (file switch, typing, window blur, config change).
+- **`vscode-extension/src/session-manager.ts`** — File session tracking, periodic flush (2 min), idle detection (5 min).
+- **`vscode-extension/src/heartbeat-sender.ts`** — Sends heartbeats to `POST /api/events/heartbeat` with Bearer auth.
+- **`vscode-extension/src/status-bar.ts`** — Status bar indicator, click to toggle tracking.
+- **`vscode-extension/src/types.ts`** — Config loading from VS Code settings, FileSession type, constants.
+- Build: `pnpm build:vscode` → `vscode-extension/dist/extension.js` (CJS via esbuild).
+
 ## TypeScript Configuration
 
 - Strict mode with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` enabled
@@ -136,8 +165,10 @@ A single long-running Node.js process that polls the active window every 5 secon
 | ORM        | Prisma               | Set up      |
 | Auth       | Auth.js              | Set up      |
 | Frontend   | Next.js (App Router) | Set up      |
-| Desktop    | Electron             | Not started |
-| Validation | Zod                  | Not started |
+| Desktop    | Electron             | Complete    |
+| Browser    | Chrome MV3 Extension | Complete    |
+| Editor     | VS Code Extension    | Complete    |
+| Validation | Zod                  | Set up      |
 
 ---
 

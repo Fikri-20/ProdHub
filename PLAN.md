@@ -49,7 +49,7 @@ main ← stable releases
 
 ---
 
-## Phase 2: REST API + Database (IN PROGRESS)
+## Phase 2: REST API + Database ✅
 
 **Goal:** Fastify API that reads/writes activity data to PostgreSQL.
 
@@ -73,7 +73,7 @@ main ← stable releases
 
 ---
 
-## Phase 3: Auth + Multi-Tenancy
+## Phase 3: Auth + Multi-Tenancy ✅
 
 **Goal:** Secure the API for multi-user SaaS. All data scoped to authenticated user.
 
@@ -90,7 +90,7 @@ main ← stable releases
 
 ---
 
-## Phase 4: Next.js Dashboard
+## Phase 4: Next.js Dashboard ✅
 
 **Goal:** Web dashboard for visualizing activity data, with Auth.js login.
 
@@ -108,7 +108,7 @@ main ← stable releases
 
 ---
 
-## Phase 5: Desktop Agent (Electron)
+## Phase 5: Desktop Agent (Electron) ✅
 
 **Goal:** Lightweight system tray app that sends heartbeats to the hosted API.
 
@@ -124,34 +124,34 @@ main ← stable releases
 
 ---
 
-## Phase 6: Browser Extension
+## Phase 6: Browser Extension ✅
 
 **Goal:** Chrome extension that tracks active tab URL and title.
 
-| Ticket     | Task                                                    | Status  |
-| ---------- | ------------------------------------------------------- | ------- |
-| TICKET-021 | 6.1 Chrome extension scaffold (Manifest V3, TypeScript) | Pending |
-| TICKET-022 | 6.2 Active tab detection + heartbeat to API             | Pending |
-| TICKET-023 | 6.3 Popup UI — today's top sites and time spent         | Pending |
-| TICKET-024 | 6.4 URL domain categorization                           | Pending |
-| TICKET-025 | 6.5 Edge cases — incognito, idle, multiple windows      | Pending |
+| Ticket     | Task                                                    | Status      |
+| ---------- | ------------------------------------------------------- | ----------- |
+| TICKET-021 | 6.1 Chrome extension scaffold (Manifest V3, TypeScript) | ✅ Complete |
+| TICKET-022 | 6.2 Active tab detection + heartbeat to API             | ✅ Complete |
+| TICKET-023 | 6.3 Popup UI — today's top sites and time spent         | ✅ Complete |
+| TICKET-024 | 6.4 URL domain categorization                           | ✅ Complete |
+| TICKET-025 | 6.5 Edge cases — incognito, idle, multiple windows      | ✅ Complete |
 
 **Milestone:** Browse normally → browser activity appears in dashboard alongside desktop activity.
 
 ---
 
-## Phase 7: Editor Plugins + Polish
+## Phase 7: Editor Plugins + Polish ✅
 
 **Goal:** Track coding at the project/file level. Real-time updates. Data export.
 
-| Ticket     | Task                                                            | Status  |
-| ---------- | --------------------------------------------------------------- | ------- |
-| TICKET-026 | 7.1 VS Code extension — heartbeats with file, language, project | Pending |
-| TICKET-027 | 7.2 Projects dimension in data model + dashboard                | Pending |
-| TICKET-028 | 7.3 WebSocket support for real-time dashboard                   | Pending |
-| TICKET-029 | 7.4 Data export (JSON, CSV) and import                          | Pending |
-| TICKET-030 | 7.5 Goals feature — daily targets + progress tracking           | Pending |
-| TICKET-031 | 7.6 Reports page — weekly/monthly summaries                     | Pending |
+| Ticket     | Task                                                            | Status      |
+| ---------- | --------------------------------------------------------------- | ----------- |
+| TICKET-026 | 7.1 VS Code extension — heartbeats with file, language, project | ✅ Complete |
+| TICKET-027 | 7.2 Projects dimension in data model + dashboard                | ✅ Complete |
+| TICKET-028 | 7.3 WebSocket support for real-time dashboard                   | ✅ Complete |
+| TICKET-029 | 7.4 Data export (JSON, CSV) and import                          | ✅ Complete |
+| TICKET-030 | 7.5 Goals feature — daily targets + progress tracking           | ✅ Complete |
+| TICKET-031 | 7.6 Reports page — weekly/monthly summaries                     | ✅ Complete |
 
 **Milestone:** Desktop + browser + editor tracking, real-time dashboard, goals, and reports.
 
@@ -186,9 +186,11 @@ main ← stable releases
 | Build       | tsup                    | ESM bundling                              |
 | Dev         | tsx                     | Watch mode for development                |
 | Package Mgr | pnpm 10.30.1            | Workspace-aware                           |
-| Validation  | Zod (planned)           | Runtime + compile-time safety             |
-| Frontend    | Next.js (planned)       | App Router + TanStack Query               |
-| Desktop     | Electron (planned)      | System tray agent, heartbeats to API      |
+| Validation  | Zod                     | Runtime + compile-time safety             |
+| Frontend    | Next.js (App Router)    | SSR + TanStack Query + Auth.js            |
+| Desktop     | Electron                | System tray agent, heartbeats to API      |
+| Browser Ext | Chrome MV3              | Active tab tracking, domain categorization|
+| Editor Ext  | VS Code Extension       | File/language/project heartbeats          |
 
 ## Active Feature Plans
 

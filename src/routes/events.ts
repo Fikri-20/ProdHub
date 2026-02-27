@@ -4,6 +4,7 @@ import prisma from "../lib/prisma.js";
 import { hashApiKey } from "../lib/api-key.js";
 import { categorizeEvent } from "../services/categorization.js";
 import { heartbeatBodySchema, eventsQuerySchema } from "../schemas/events.js";
+import { broadcastToUser } from "../services/ws-broadcast.js";
 
 const eventRoutes = async (app: FastifyInstance) => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -54,6 +55,9 @@ const eventRoutes = async (app: FastifyInstance) => {
         categories: { include: { category: true } },
       },
     });
+
+    // Broadcast to connected WebSocket clients
+    broadcastToUser(userId, { type: "heartbeat", event: fullEvent });
 
     return reply.status(201).send(fullEvent);
   });

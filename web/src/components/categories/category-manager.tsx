@@ -7,6 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { CategoryForm } from "./category-form";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import type { Category, CategoryFormData } from "@/types/categories";
 import { useAuthedClientApi } from "@/hooks/use-authed-client-api";
 import {
@@ -24,6 +25,7 @@ export function CategoryManager() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
 
   const categoriesQuery = useQuery({
     queryKey: userId ? queryKeys.categories(userId) : ["categories", "anonymous"],
@@ -64,7 +66,6 @@ export function CategoryManager() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!clientApi) throw new Error("Not authenticated");
-      setDeleting(id);
       await deleteCategory(clientApi, id);
       return id;
     },
@@ -73,6 +74,7 @@ export function CategoryManager() {
       queryClient.setQueryData(queryKeys.categories(userId), (previous: Category[] = []) =>
         previous.filter((category) => category.id !== deletedId),
       );
+      setCategoryToDelete(null);
     },
     onSettled: () => {
       setDeleting(null);
@@ -89,12 +91,18 @@ export function CategoryManager() {
   }
 
   async function handleDelete(id: string) {
-    await deleteMutation.mutateAsync(id);
+    setDeleting(id);
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (err) {
+      console.error("Failed to delete category:", err);
+    }
   }
 
   if (isSessionLoading || categoriesQuery.isPending) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-indigo-500 dark:border-zinc-700 dark:border-t-indigo-400" />
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Loading categories...
         </p>
@@ -104,7 +112,7 @@ export function CategoryManager() {
 
   if (!clientApi || !userId) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
         <p className="text-sm text-red-600 dark:text-red-400">
           Not authenticated
         </p>
@@ -114,7 +122,7 @@ export function CategoryManager() {
 
   if (categoriesQuery.error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
         <p className="text-sm text-red-600 dark:text-red-400">
           {categoriesQuery.error.message}
         </p>
@@ -126,7 +134,8 @@ export function CategoryManager() {
 
   if (showForm) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">New Category</h3>
         <CategoryForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
       </div>
     );
@@ -134,7 +143,10 @@ export function CategoryManager() {
 
   if (editingCategory) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h3 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Edit &ldquo;{editingCategory.name}&rdquo;
+        </h3>
         <CategoryForm
           initialData={{
             name: editingCategory.name,
@@ -149,13 +161,16 @@ export function CategoryManager() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {categories.length} categor{categories.length === 1 ? "y" : "ies"}
+        </p>
         <button
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md active:scale-[0.98]"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
           New Category
@@ -163,13 +178,18 @@ export function CategoryManager() {
       </div>
 
       {categories.length === 0 ? (
-        <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
-          <svg className="mx-auto h-10 w-10 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-          </svg>
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-            No categories yet. Create one to start organizing your activity.
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-zinc-200 py-16 dark:border-zinc-800">
+          <div className="mb-4 rounded-full bg-zinc-100 p-4 dark:bg-zinc-800/60">
+            <svg className="h-8 w-8 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            No categories yet
+          </p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+            Create one to start organizing your activity
           </p>
         </div>
       ) : (
@@ -177,20 +197,26 @@ export function CategoryManager() {
           {categories.map((category) => (
             <div
               key={category.id}
-              className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+              className="group relative overflow-hidden rounded-xl border border-zinc-100 bg-white p-4 shadow-sm transition-all hover:border-zinc-200 hover:shadow-md dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:hover:border-zinc-700"
             >
-              <div className="flex items-start justify-between">
+              {/* Color accent bar */}
+              <div
+                className="absolute left-0 top-0 h-full w-1 rounded-l-xl"
+                style={{ backgroundColor: category.color }}
+              />
+
+              <div className="flex items-start justify-between pl-2">
                 <div className="flex items-center gap-2.5">
                   <span
-                    className="inline-block h-4 w-4 rounded-full border border-zinc-200 dark:border-zinc-700"
+                    className="inline-block h-4 w-4 rounded-full ring-2 ring-white dark:ring-zinc-900"
                     style={{ backgroundColor: category.color }}
                   />
-                  <h3 className="font-medium text-zinc-900 dark:text-zinc-50">{category.name}</h3>
+                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{category.name}</h3>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     onClick={() => setEditingCategory(category)}
-                    className="rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
                     aria-label={`Edit ${category.name}`}
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
@@ -198,13 +224,9 @@ export function CategoryManager() {
                     </svg>
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Delete "${category.name}"? This cannot be undone.`)) {
-                        handleDelete(category.id);
-                      }
-                    }}
+                    onClick={() => setCategoryToDelete(category)}
                     disabled={deleting === category.id}
-                    className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+                    className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-950 dark:hover:text-red-400"
                     aria-label={`Delete ${category.name}`}
                   >
                     {deleting === category.id ? (
@@ -222,21 +244,43 @@ export function CategoryManager() {
               </div>
 
               {category.rules.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1.5 pl-2">
                   {category.rules.map((rule, index) => (
                     <code
                       key={index}
-                      className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                      className="rounded-md bg-zinc-50 px-2 py-0.5 text-xs text-zinc-500 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-400 dark:ring-zinc-700"
                     >
                       {rule}
                     </code>
                   ))}
                 </div>
               )}
+
+              {category.rules.length === 0 && (
+                <p className="mt-2 pl-2 text-xs text-zinc-400 dark:text-zinc-500">
+                  No rules defined
+                </p>
+              )}
             </div>
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={categoryToDelete !== null}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${categoryToDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={deleting === categoryToDelete?.id}
+        onConfirm={() => {
+          if (categoryToDelete) {
+            handleDelete(categoryToDelete.id);
+          }
+        }}
+        onCancel={() => setCategoryToDelete(null)}
+      />
     </div>
   );
 }

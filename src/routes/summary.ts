@@ -22,6 +22,49 @@ const summaryRoutes = async (app: FastifyInstance) => {
       const effectiveFrom = from ?? twentyFourHoursAgo;
       const effectiveTo = to ?? now;
 
+      if (groupBy === "project") {
+        // Extract project name from windowTitle patterns:
+        // VS Code: "file [lang] - ProjectName" → last segment after " - "
+        // Other apps: use appName as fallback
+        const results = await prisma.$queryRaw<
+          Array<{ project: string; total_duration: bigint }>
+        >`
+        SELECT
+          COALESCE(
+            NULLIF(
+              TRIM(SUBSTRING(ae.window_title FROM '.*\s-\s(.+)$')),
+              ''
+            ),
+            ae.app_name
+          ) AS project,
+          COALESCE(SUM(ae.duration), 0) AS total_duration
+        FROM activity_events ae
+        JOIN devices d ON d.id = ae.device_id
+        WHERE d.user_id = ${userId}
+          AND ae.start_time >= ${effectiveFrom}
+          AND ae.start_time <= ${effectiveTo}
+        GROUP BY project
+        ORDER BY total_duration DESC
+      `;
+
+        const totalDuration = results.reduce(
+          (sum, r) => sum + Number(r.total_duration),
+          0,
+        );
+
+        const summary = results.map((r) => ({
+          name: r.project,
+          totalDuration: Number(r.total_duration),
+          percentage:
+            totalDuration > 0
+              ? Math.round((Number(r.total_duration) / totalDuration) * 10000) /
+                100
+              : 0,
+        }));
+
+        return reply.send(summary);
+      }
+
       if (groupBy === "app") {
         // Scope to user's devices via raw query for correct groupBy
         const results = await prisma.$queryRaw<
