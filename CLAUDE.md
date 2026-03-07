@@ -11,20 +11,20 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
 ## Current Progress
 
 - **Phase 1 (complete):** Local CLI tracker that polls the active window every 5s and logs to SQLite.
-- **Phase 2 (complete):** REST API with Fastify + PostgreSQL + Prisma.
+- **Phase 2 (complete):** REST API with Fastify + SQLite + Prisma.
   - [x] 2.1 Fastify server with plugin-based route architecture
-  - [x] 2.2 PostgreSQL (Docker) + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
+  - [x] 2.2 SQLite + Prisma schema (Device, Category, ActivityEvent, CategoryAssignment)
   - [x] 2.3 Build API endpoints (heartbeat, events query, summary, categories CRUD) — TICKET-001
   - [x] 2.4 Zod validation with fastify-type-provider-zod — TICKET-002
   - [x] 2.5 Categorization engine — TICKET-003
   - [x] 2.6 Migrate tracker to POST heartbeats to API — TICKET-004
 - **Phase 3 (complete):** Auth + Multi-Tenancy (TICKET-005 through TICKET-008)
-  - [x] 3.1 User model + multi-tenant data scoping — TICKET-005
+  - [x] 3.1 User model + data scoping — TICKET-005
   - [x] 3.2 API key auth for desktop agents — TICKET-006
   - [x] 3.3 Tenant isolation — TICKET-007
   - [x] 3.4 Rate limiting + CORS — TICKET-008
 - **Phase 4 (complete):** Next.js Dashboard (TICKET-009 through TICKET-015)
-  - [x] 4.1 Next.js App Router scaffold + Auth.js — TICKET-009
+  - [x] 4.1 Next.js App Router scaffold — TICKET-009
   - [x] 4.2 Timeline View — TICKET-010
   - [x] 4.3 Summary View — TICKET-011
   - [x] 4.4 GitHub-style Heatmap — TICKET-012
@@ -65,9 +65,7 @@ pnpm start            # Run built tracker (node dist/tracker.js)
 pnpm start:server     # Run built server (node dist/server.js)
 
 # Database
-pnpm db:up            # Start PostgreSQL container (docker compose up -d)
-pnpm db:down          # Stop PostgreSQL container
-pnpm db:migrate       # Run Prisma migrations (prisma migrate dev)
+pnpm db:migrate       # Run Prisma migrations (creates SQLite DB)
 pnpm db:studio        # Open Prisma Studio GUI
 pnpm db:generate      # Regenerate Prisma client
 
@@ -89,10 +87,10 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/types.ts`** — Shared `ActivityEvent` type (appName, windowTitle, startTime, endTime, duration).
 - **`src/query.ts`** — Placeholder for querying activity data.
 
-### API Server (Phase 2 — PostgreSQL)
+### API Server (Phase 2 — SQLite)
 
 - **`src/server.ts`** — Fastify server on port 3000 with plugin architecture. Registers route plugins and manages Prisma lifecycle.
-- **`src/lib/prisma.ts`** — Prisma client singleton using `@prisma/adapter-pg`.
+- **`src/lib/prisma.ts`** — Prisma client singleton (SQLite, no adapter needed).
 - **`src/routes/events.ts`** — Event routes: `POST /api/events/heartbeat` (ingest + device upsert), `GET /api/events` (query with filters/pagination).
 - **`src/routes/categories.ts`** — Categories CRUD at `/api/categories` (GET list, POST create, GET/:id, PATCH/:id, DELETE/:id).
 - **`src/routes/summary.ts`** — `GET /api/summary?groupBy=app|category` (aggregated durations).
@@ -102,29 +100,24 @@ A single long-running Node.js process that polls the active window every 5 secon
 - **`src/routes/ws.ts`** — WebSocket upgrade route for real-time dashboard updates.
 - **`src/services/ws-broadcast.ts`** — WebSocket broadcast service for pushing events to connected clients.
 
-### Database (PostgreSQL + Prisma)
+### Database (SQLite + Prisma)
 
-- **`docker-compose.yml`** — PostgreSQL 16 Alpine with persistent volume. Credentials: `prodhub/prodhub_dev`, database: `prodhub`.
-- **`prisma/schema.prisma`** — Models:
-  - `User` — users with email, name, OAuth fields
+- **`prisma/schema.prisma`** — SQLite database at `prisma/prodhub.db`. Models:
+  - `User` — users with email, name, optional passwordHash
   - `ApiKey` — API keys for desktop agent auth
   - `Device` — tracked machines (id, name, os)
-  - `Category` — user-defined categories with regex rules and colors
+  - `Category` — user-defined categories with regex rules (JSON string) and colors
   - `ActivityEvent` — tracked events (appName, windowTitle, startTime, endTime, duration, deviceId)
   - `CategoryAssignment` — many-to-many link between events and categories
-  - `Account` — OAuth provider accounts (Auth.js)
-  - `Session` — database sessions (Auth.js)
-  - `VerificationToken` — email magic link tokens (Auth.js)
-- Two generators: `client` → `src/generated/prisma/`, `webClient` → `web/src/generated/prisma/`
-- **`.env`** — `DATABASE_URL` for Prisma (gitignored).
+  - `Goal` — daily targets with progress tracking
+- Single generator: `client` → `src/generated/prisma/`
+- No Docker required — SQLite is a file.
 
 ### Web Dashboard (Phase 4 — Next.js)
 
-- **`web/`** — Next.js App Router on port 3001 with Auth.js v5.
-- **`web/src/auth.ts`** — Auth.js config with Google, GitHub, Resend providers + PrismaAdapter.
-- **`web/src/middleware.ts`** — Route protection: unauthenticated → `/auth/signin`, authenticated auth pages → `/dashboard`.
-- **`web/src/lib/prisma.ts`** — Prisma client singleton for web (uses `webClient` generator output).
-- **`web/src/lib/api-client.ts`** — Server-side `apiClient()` (reads session, sets `X-User-Id`) and client-side `createClientApiClient()`.
+- **`web/`** — Next.js App Router on port 3001 (no Auth.js — self-hosted mode).
+- **`web/src/auth.ts`** — Fetches default user ID from Fastify `/api/setup/status` endpoint.
+- **`web/src/lib/api-client.ts`** — Server-side `apiClient()` (reads default user, sets `X-User-Id`) and client-side `createClientApiClient()`.
 - **`web/src/app/auth/signin/`** — Sign-in page with Google, GitHub, email magic link.
 - **`web/src/app/dashboard/`** — Dashboard layout with sidebar nav + header.
 
@@ -161,9 +154,8 @@ A single long-running Node.js process that polls the active window every 5 secon
 | Layer      | Choice               | Status      |
 | ---------- | -------------------- | ----------- |
 | Backend    | Fastify (TS)         | Set up      |
-| Database   | PostgreSQL + Prisma  | Set up      |
+| Database   | SQLite + Prisma      | Set up      |
 | ORM        | Prisma               | Set up      |
-| Auth       | Auth.js              | Set up      |
 | Frontend   | Next.js (App Router) | Set up      |
 | Desktop    | Electron             | Complete    |
 | Browser    | Chrome MV3 Extension | Complete    |

@@ -1,28 +1,46 @@
-import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
-import GitHub from "next-auth/providers/github";
-import Resend from "next-auth/providers/resend";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    Google,
-    GitHub,
-    Resend({
-      apiKey: process.env.AUTH_RESEND_KEY,
-      from: process.env.EMAIL_FROM ?? "noreply@prodhub.dev",
-    }),
-  ],
-  session: { strategy: "database" },
-  pages: {
-    signIn: "/auth/signin",
-  },
-  callbacks: {
-    session({ session, user }) {
-      session.user.id = user.id;
-      return session;
-    },
-  },
-});
+let cachedUserId: string | null = null;
+
+/**
+ * Get the default user ID from the Fastify server.
+ * In self-hosted mode, there is always exactly one user.
+ */
+export async function getDefaultUserId(): Promise<string> {
+  if (cachedUserId) return cachedUserId;
+
+  const res = await fetch(`${API_BASE_URL}/api/setup/status`, {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch setup status from API server");
+  }
+
+  const data = (await res.json()) as { userId: string | null };
+  if (!data.userId) {
+    throw new Error("No default user configured on API server");
+  }
+
+  cachedUserId = data.userId;
+  return cachedUserId;
+}
+
+/**
+ * Compatibility shim: returns a session-like object for components
+ * that previously used Auth.js session.
+ */
+export async function auth(): Promise<{ user: { id: string; email: string } } | null> {
+  try {
+    const userId = await getDefaultUserId();
+    return {
+      user: {
+        id: userId,
+        email: "admin@localhost",
+      },
+    };
+  } catch {
+    return null;
+  }
+}

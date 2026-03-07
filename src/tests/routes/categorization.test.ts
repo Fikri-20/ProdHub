@@ -43,7 +43,7 @@ describe("Categorization Integration", () => {
   describe("Auto-categorization on heartbeat", () => {
     it("should assign matching categories on heartbeat", async () => {
       await prisma.category.create({
-        data: { name: "Development", userId, rules: ["VS Code", "Terminal"] },
+        data: { name: "Development", userId, rules: JSON.stringify(["VS Code", "Terminal"]) },
       });
 
       const res = await app.inject({
@@ -63,8 +63,8 @@ describe("Categorization Integration", () => {
     it("should assign multiple matching categories", async () => {
       await prisma.category.createMany({
         data: [
-          { name: "Development", userId, rules: ["VS Code"] },
-          { name: "ProdHub Work", userId, rules: ["ProdHub"] },
+          { name: "Development", userId, rules: JSON.stringify(["VS Code"]) },
+          { name: "ProdHub Work", userId, rules: JSON.stringify(["ProdHub"]) },
         ],
       });
 
@@ -88,7 +88,7 @@ describe("Categorization Integration", () => {
 
     it("should return empty categories array when no rules match", async () => {
       await prisma.category.create({
-        data: { name: "Gaming", userId, rules: ["Steam", "Discord"] },
+        data: { name: "Gaming", userId, rules: JSON.stringify(["Steam", "Discord"]) },
       });
 
       const res = await app.inject({
@@ -104,7 +104,7 @@ describe("Categorization Integration", () => {
 
     it("should skip categories with empty rules", async () => {
       await prisma.category.create({
-        data: { name: "Uncategorized", userId, rules: [] },
+        data: { name: "Uncategorized", userId, rules: JSON.stringify([]) },
       });
 
       const res = await app.inject({
@@ -124,7 +124,7 @@ describe("Categorization Integration", () => {
       });
 
       await prisma.category.create({
-        data: { name: "Development", userId: user2.id, rules: ["VS Code"] },
+        data: { name: "Development", userId: user2.id, rules: JSON.stringify(["VS Code"]) },
       });
 
       const res = await app.inject({
@@ -175,7 +175,7 @@ describe("Categorization Integration", () => {
       });
 
       const category = await prisma.category.create({
-        data: { name: "Development", userId, rules: ["VS Code"] },
+        data: { name: "Development", userId, rules: JSON.stringify(["VS Code"]) },
       });
 
       const res = await app.inject({
@@ -208,7 +208,7 @@ describe("Categorization Integration", () => {
       });
 
       const category = await prisma.category.create({
-        data: { name: "Development", userId, rules: ["VS Code"] },
+        data: { name: "Development", userId, rules: JSON.stringify(["VS Code"]) },
       });
 
       // Manually create an assignment
@@ -219,7 +219,7 @@ describe("Categorization Integration", () => {
       // Update rules so it no longer matches
       await prisma.category.update({
         where: { id: category.id },
-        data: { rules: ["Terminal"] },
+        data: { rules: JSON.stringify(["Terminal"]) },
       });
 
       const res = await app.inject({
@@ -263,7 +263,7 @@ describe("Categorization Integration", () => {
       });
 
       const category = await prisma.category.create({
-        data: { name: "Development", userId: user2.id, rules: ["VS Code"] },
+        data: { name: "Development", userId: user2.id, rules: JSON.stringify(["VS Code"]) },
       });
 
       const res = await app.inject({
@@ -302,7 +302,7 @@ describe("Categorization Integration", () => {
 
     it("should reject invalid regex on category update", async () => {
       const cat = await prisma.category.create({
-        data: { name: "Test", userId, rules: ["valid"] },
+        data: { name: "Test", userId, rules: JSON.stringify(["valid"]) },
       });
 
       const res = await app.inject({

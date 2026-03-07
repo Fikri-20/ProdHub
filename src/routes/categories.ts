@@ -8,6 +8,14 @@ import {
   categoryParamsSchema,
 } from "../schemas/categories.js";
 
+/** Parse rules JSON string to array for API responses. */
+function formatCategory(cat: { id: string; userId: string; name: string; color: string; rules: string }) {
+  return {
+    ...cat,
+    rules: JSON.parse(cat.rules) as string[],
+  };
+}
+
 const categoryRoutes = async (app: FastifyInstance) => {
   const typedApp = app.withTypeProvider<ZodTypeProvider>();
 
@@ -19,7 +27,7 @@ const categoryRoutes = async (app: FastifyInstance) => {
       where: { userId },
       orderBy: { name: "asc" },
     });
-    return reply.send(categories);
+    return reply.send(categories.map(formatCategory));
   });
 
   // POST /api/categories — create a category (scoped to user)
@@ -43,7 +51,7 @@ const categoryRoutes = async (app: FastifyInstance) => {
         name,
         userId,
         ...(color !== undefined ? { color } : {}),
-        ...(rules !== undefined ? { rules } : {}),
+        ...(rules !== undefined ? { rules: JSON.stringify(rules) } : {}),
       },
     });
 
@@ -52,7 +60,7 @@ const categoryRoutes = async (app: FastifyInstance) => {
       await recategorizeForCategory(category.id, userId);
     }
 
-    return reply.status(201).send(category);
+    return reply.status(201).send(formatCategory(category));
   });
 
   // GET /api/categories/:id — get a single category (scoped to user)
@@ -71,7 +79,10 @@ const categoryRoutes = async (app: FastifyInstance) => {
       return reply.status(404).send({ error: "Category not found" });
     }
 
-    return reply.send(category);
+    return reply.send({
+      ...category,
+      rules: JSON.parse(category.rules) as string[],
+    });
   });
 
   // PATCH /api/categories/:id — update a category (scoped to user)
@@ -113,7 +124,7 @@ const categoryRoutes = async (app: FastifyInstance) => {
     }
 
     if (rules !== undefined) {
-      data.rules = rules;
+      data.rules = JSON.stringify(rules);
     }
 
     const updated = await prisma.category.update({
@@ -126,7 +137,7 @@ const categoryRoutes = async (app: FastifyInstance) => {
       await recategorizeForCategory(id, userId);
     }
 
-    return reply.send(updated);
+    return reply.send(formatCategory(updated));
   });
 
   // DELETE /api/categories/:id — delete a category (cascades assignments, scoped to user)

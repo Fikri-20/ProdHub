@@ -1,8 +1,0 @@
-﻿error TS6059: File 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/prisma.config.ts' is not under 'rootDir' 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/src'. 'rootDir' is expected to contain all source files.
-  The file is in the program because:
-    Matched by default include pattern '**/*'
-  File is ECMAScript module because 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/package.json' has field "type" with value "module"
-error TS6059: File 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/vitest.config.ts' is not under 'rootDir' 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/src'. 'rootDir' is expected to contain all source files.
-  The file is in the program because:
-    Matched by default include pattern '**/*'
-  File is ECMAScript module because 'C:/Users/ahmed/OneDrive/Desktop/projects/ProdHub/package.json' has field "type" with value "module"

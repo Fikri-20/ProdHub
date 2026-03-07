@@ -1,5 +1,15 @@
 import prisma from "../lib/prisma.js";
 
+/** Parse rules from JSON string to string array. */
+function parseRules(rules: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(rules);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Pure function: returns true if ANY rule regex matches appName OR windowTitle (case-insensitive).
  */
@@ -32,13 +42,14 @@ export async function categorizeEvent(
   userId: string,
 ): Promise<void> {
   const categories = await prisma.category.findMany({
-    where: { userId, rules: { isEmpty: false } },
+    where: { userId },
   });
 
   const matchingCategoryIds: string[] = [];
 
   for (const category of categories) {
-    if (matchesCategory(appName, windowTitle, category.rules)) {
+    const rules = parseRules(category.rules);
+    if (rules.length > 0 && matchesCategory(appName, windowTitle, rules)) {
       matchingCategoryIds.push(category.id);
     }
   }
@@ -77,8 +88,10 @@ export async function recategorizeForCategory(
     where: { categoryId },
   });
 
+  const rules = parseRules(category.rules);
+
   // If category has no rules, nothing to assign
-  if (category.rules.length === 0) {
+  if (rules.length === 0) {
     return 0;
   }
 
@@ -99,7 +112,7 @@ export async function recategorizeForCategory(
 
     const matchingEventIds: string[] = [];
     for (const event of events) {
-      if (matchesCategory(event.appName, event.windowTitle, category.rules)) {
+      if (matchesCategory(event.appName, event.windowTitle, rules)) {
         matchingEventIds.push(event.id);
       }
     }

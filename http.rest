@@ -1,0 +1,9 @@
+POST http://localhost:3000/api/events
+Content-Type: application/json
+Authorization: Bearer pk_a56ce3bb17ffb7cf83df0d368066c4000e8c5eae758cf90a9d7bc3c698cd302f
+
+{
+  "from": "2026-02-25T00:00:00Z",
+  "to": "2026-02-26T00:00:00Z",
+  "limit": 5
+}

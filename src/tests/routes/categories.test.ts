@@ -375,7 +375,7 @@ describe("Category Routes", () => {
       });
 
       const category = await prisma.category.create({
-        data: { name: "Focus", userId, rules: ["Chrome"] },
+        data: { name: "Focus", userId, rules: JSON.stringify(["Chrome"]) },
       });
       await prisma.categoryAssignment.create({
         data: { eventId: chromeEvent.id, categoryId: category.id },

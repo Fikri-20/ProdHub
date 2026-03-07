@@ -131,7 +131,7 @@ describe("Event Routes", () => {
 
     it("should auto-assign matching categories from rules", async () => {
       const category = await prisma.category.create({
-        data: { name: "Coding", userId, rules: ["VS\\sCode"] },
+        data: { name: "Coding", userId, rules: JSON.stringify(["VS\\sCode"]) },
       });
 
       const res = await app.inject({

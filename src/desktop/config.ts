@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
 import { app } from "electron";
 
@@ -83,7 +84,28 @@ function envOverrides(): Partial<DesktopConfig> {
 }
 
 /**
- * Load config with priority: env vars > userData config.json > baked-in config.json > defaults.
+ * Try to load shared agent config from ~/.prodhub/agent.json (written by the server on startup).
+ * Returns partial config with apiKey and apiUrl if available.
+ */
+function tryLoadSharedAgentConfig(): Partial<DesktopConfig> {
+  try {
+    const sharedPath = path.join(homedir(), ".prodhub", "agent.json");
+    if (!existsSync(sharedPath)) {
+      return {};
+    }
+    const raw = readFileSync(sharedPath, "utf8");
+    const data = JSON.parse(raw) as { apiKey?: string; apiUrl?: string };
+    const overrides: Partial<DesktopConfig> = {};
+    if (data.apiKey) overrides.apiKey = data.apiKey;
+    if (data.apiUrl) overrides.apiUrl = data.apiUrl;
+    return overrides;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Load config with priority: env vars > userData config.json > shared agent config > baked-in config.json > defaults.
  * On first launch, writes config.json to userData so the user has a file to edit.
  */
 export function loadConfig(): DesktopConfig {
@@ -94,13 +116,17 @@ export function loadConfig(): DesktopConfig {
   const bakedConfigPath = path.join(__dirname, "config.json");
   const bakedConfig = readJsonFile(bakedConfigPath);
 
-  // 3. Get env var overrides
+  // 3. Load shared agent config from ~/.prodhub/agent.json
+  const shared = tryLoadSharedAgentConfig();
+
+  // 4. Get env var overrides
   const env = envOverrides();
 
-  // Merge: defaults < baked < userData < env
+  // Merge: defaults < baked < shared < userData < env
   const merged: DesktopConfig = {
     ...DEFAULTS,
     ...bakedConfig,
+    ...shared,
     ...userDataConfig,
     ...env,
   };

@@ -1,6 +1,4 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LiveStatusIndicator } from "@/components/live-status/live-status-indicator";
 
 export default async function DashboardLayout({
@@ -9,10 +7,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-
-  if (!session) {
-    redirect("/auth/signin");
-  }
+  const userId = session?.user?.id ?? "";
 
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -87,12 +82,11 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col">
         {/* Header */}
         <header className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <LiveStatusIndicator userId={session.user.id!} />
+          <LiveStatusIndicator userId={userId} />
           <div className="flex items-center gap-4">
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
-              {session.user.email}
+              Self-hosted
             </span>
-            <SignOutButton />
           </div>
         </header>
 

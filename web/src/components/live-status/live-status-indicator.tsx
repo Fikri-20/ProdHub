@@ -37,6 +37,10 @@ function useWebSocket(userId: string) {
       }
     };
 
+    ws.onerror = () => {
+      // Connection failed — polling will keep data fresh
+    };
+
     ws.onclose = () => {
       // Reconnect after 5 seconds
       setTimeout(() => {
@@ -65,6 +69,7 @@ export function LiveStatusIndicator({ userId }: LiveStatusIndicatorProps) {
     queryFn: () => fetchLatestEvent(clientApi),
     refetchInterval: POLL_INTERVAL,
     refetchIntervalInBackground: true,
+    retry: false,
   });
 
   const event = latestEventQuery.data ?? null;
@@ -80,7 +85,7 @@ export function LiveStatusIndicator({ userId }: LiveStatusIndicatorProps) {
     return () => clearInterval(timer);
   }, [event]);
 
-  if (!event) {
+  if (!event || latestEventQuery.isError) {
     return (
       <div className="flex items-center gap-2 text-sm text-zinc-400">
         <span className="h-2 w-2 rounded-full bg-zinc-400" />

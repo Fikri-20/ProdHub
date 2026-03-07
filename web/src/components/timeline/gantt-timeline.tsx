@@ -269,13 +269,19 @@ export function GanttTimeline({ events }: GanttTimelineProps) {
         </div>
       </div>
 
-      {/* Tooltip */}
+      {/* Tooltip — rendered in a portal-like wrapper outside the overflow container */}
       {tooltip && (
         <div
-          className="pointer-events-none absolute z-50 max-w-xs rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
+          className="pointer-events-none fixed z-50 max-w-xs rounded-lg border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-800"
           style={{
-            left: Math.min(tooltip.x + 12, (containerRef.current?.clientWidth ?? 500) - 260),
-            top: tooltip.y - 80,
+            left: Math.min(
+              (containerRef.current?.getBoundingClientRect().left ?? 0) + tooltip.x + 12,
+              window.innerWidth - 280,
+            ),
+            top: Math.max(
+              8,
+              (containerRef.current?.getBoundingClientRect().top ?? 0) + tooltip.y - 80,
+            ),
           }}
         >
           <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">

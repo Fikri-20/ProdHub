@@ -79,10 +79,10 @@ describe("Tenant Isolation", () => {
     });
 
     const catA = await prisma.category.create({
-      data: { name: "Coding", userId: userA, rules: ["VS\\sCode"] },
+      data: { name: "Coding", userId: userA, rules: JSON.stringify(["VS\\sCode"]) },
     });
     const catB = await prisma.category.create({
-      data: { name: "Coding", userId: userB, rules: ["IntelliJ"] },
+      data: { name: "Coding", userId: userB, rules: JSON.stringify(["IntelliJ"]) },
     });
 
     return { deviceA, deviceB, catA, catB };
@@ -97,7 +97,7 @@ describe("Tenant Isolation", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: "ok" });
+    expect(res.json()).toEqual({ status: "ok", authenticated: false });
   });
 
   it("2. GET /api/events/health returns 200 with auth headers too", async () => {
@@ -108,7 +108,7 @@ describe("Tenant Isolation", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: "ok" });
+    expect(res.json()).toEqual({ status: "ok", authenticated: false });
   });
 
   // ─── Heartbeat isolation ─────────────────────────────────────
@@ -401,12 +401,12 @@ describe("Tenant Isolation", () => {
   it("17. Auto-categorize on heartbeat uses only requesting user's rules", async () => {
     // User A has a "Coding" rule matching "VS Code"
     await prisma.category.create({
-      data: { name: "Coding", userId: userA, rules: ["VS\\sCode"] },
+      data: { name: "Coding", userId: userA, rules: JSON.stringify(["VS\\sCode"]) },
     });
 
     // User B has a "Browsing" rule matching "VS Code" (different category name)
     await prisma.category.create({
-      data: { name: "Browsing", userId: userB, rules: ["VS\\sCode"] },
+      data: { name: "Browsing", userId: userB, rules: JSON.stringify(["VS\\sCode"]) },
     });
 
     // User A sends a heartbeat with VS Code

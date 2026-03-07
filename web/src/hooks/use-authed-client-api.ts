@@ -1,12 +1,22 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import { createClientApiClient } from "@/lib/client-api";
 
+async function fetchUserId(): Promise<string | null> {
+  const res = await fetch("/api/me");
+  if (!res.ok) return null;
+  const data = (await res.json()) as { userId: string | null };
+  return data.userId;
+}
+
 export function useAuthedClientApi() {
-  const { data, status } = useSession();
-  const userId = data?.user?.id;
+  const { data: userId, isLoading } = useQuery({
+    queryKey: ["me"],
+    queryFn: fetchUserId,
+    staleTime: Infinity,
+  });
 
   const clientApi = useMemo(() => {
     if (!userId) return null;
@@ -14,9 +24,9 @@ export function useAuthedClientApi() {
   }, [userId]);
 
   return {
-    status,
+    status: isLoading ? ("loading" as const) : userId ? ("authenticated" as const) : ("unauthenticated" as const),
     userId,
     clientApi,
-    isSessionLoading: status === "loading",
+    isSessionLoading: isLoading,
   };
 }

@@ -1,12 +1,27 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import {
+  Navigation,
+  HeroSection,
+  PlatformMarquee,
+  ValueProps,
+  ArchitectureFlow,
+  BentoGrid,
+  FooterCTA,
+  Footer,
+} from "@/components/landing";
 
-export default async function Home() {
-  const session = await auth();
-
-  if (session) {
-    redirect("/dashboard");
-  } else {
-    redirect("/auth/signin");
-  }
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-zinc-950">
+      <Navigation />
+      <main>
+        <HeroSection />
+        <PlatformMarquee />
+        <ValueProps />
+        <ArchitectureFlow />
+        <BentoGrid />
+        <FooterCTA />
+        <Footer />
+      </main>
+    </div>
+  );
 }

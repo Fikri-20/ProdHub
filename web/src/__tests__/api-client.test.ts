@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Session } from "next-auth";
 
 const mockFetch = vi.fn();
 globalThis.fetch = mockFetch;
 
 vi.mock("@/auth", () => ({
-  auth: vi.fn(),
+  getDefaultUserId: vi.fn(),
 }));
 
 describe("apiClient (server-side)", () => {
@@ -14,21 +13,10 @@ describe("apiClient (server-side)", () => {
     mockFetch.mockResolvedValue(new Response(JSON.stringify({ ok: true })));
   });
 
-  it("should set X-User-Id header from session", async () => {
-    const { auth } = await import("@/auth");
+  it("should set X-User-Id header from default user", async () => {
+    const { getDefaultUserId } = await import("@/auth");
     const { apiClient } = await import("@/lib/api-client");
-    const mockedAuth = vi.mocked(auth);
-
-    const session: Session = {
-      user: {
-        id: "user-123",
-        email: "test@example.com",
-        name: null,
-        image: null,
-      },
-      expires: new Date(Date.now() + 86_400_000).toISOString(),
-    };
-    mockedAuth.mockResolvedValue(session);
+    vi.mocked(getDefaultUserId).mockResolvedValue("user-123");
 
     await apiClient("/api/events");
 
@@ -41,14 +29,12 @@ describe("apiClient (server-side)", () => {
     });
   });
 
-  it("should throw if not authenticated", async () => {
-    const { auth } = await import("@/auth");
+  it("should throw if default user is not available", async () => {
+    const { getDefaultUserId } = await import("@/auth");
     const { apiClient } = await import("@/lib/api-client");
-    const mockedAuth = vi.mocked(auth);
+    vi.mocked(getDefaultUserId).mockRejectedValue(new Error("No default user configured on API server"));
 
-    mockedAuth.mockResolvedValue(null);
-
-    await expect(apiClient("/api/events")).rejects.toThrow("Not authenticated");
+    await expect(apiClient("/api/events")).rejects.toThrow("No default user");
   });
 });
 

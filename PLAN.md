@@ -209,7 +209,7 @@ main ← stable releases
 - **Context:** Original plan used React + Vite for the frontend. As a SaaS product, we need SSR for the landing page, built-in API routes for Auth.js callbacks, and a unified deployment target.
 - **Decision:** Use Next.js with App Router. Auth.js integrates natively. TanStack Query for client-side data fetching.
 - **Status:** Accepted.
-
+  
 ### ADR-003: Auth Before Dashboard (Phase 3)
 
 - **Context:** Building the dashboard first would require retrofitting auth into every component and query later.

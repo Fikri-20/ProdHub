@@ -23,44 +23,44 @@ const summaryRoutes = async (app: FastifyInstance) => {
       const effectiveTo = to ?? now;
 
       if (groupBy === "project") {
-        // Extract project name from windowTitle patterns:
-        // VS Code: "file [lang] - ProjectName" → last segment after " - "
-        // Other apps: use appName as fallback
-        const results = await prisma.$queryRaw<
-          Array<{ project: string; total_duration: bigint }>
+        // SQLite doesn't support regex in SQL — fetch raw events and extract project in JS
+        const rawEvents = await prisma.$queryRaw<
+          Array<{ app_name: string; window_title: string; duration: number }>
         >`
-        SELECT
-          COALESCE(
-            NULLIF(
-              TRIM(SUBSTRING(ae.window_title FROM '.*\s-\s(.+)$')),
-              ''
-            ),
-            ae.app_name
-          ) AS project,
-          COALESCE(SUM(ae.duration), 0) AS total_duration
+        SELECT ae.app_name, ae.window_title, ae.duration
         FROM activity_events ae
         JOIN devices d ON d.id = ae.device_id
         WHERE d.user_id = ${userId}
           AND ae.start_time >= ${effectiveFrom}
           AND ae.start_time <= ${effectiveTo}
-        GROUP BY project
-        ORDER BY total_duration DESC
       `;
 
-        const totalDuration = results.reduce(
-          (sum, r) => sum + Number(r.total_duration),
+        // Extract project name: "file [lang] - ProjectName" → last segment after " - "
+        const projectDurations = new Map<string, number>();
+        for (const row of rawEvents) {
+          const match = row.window_title.match(/.*\s-\s(.+)$/);
+          const project = match?.[1]?.trim() || row.app_name;
+          projectDurations.set(
+            project,
+            (projectDurations.get(project) ?? 0) + Number(row.duration),
+          );
+        }
+
+        const totalDuration = [...projectDurations.values()].reduce(
+          (sum, d) => sum + d,
           0,
         );
 
-        const summary = results.map((r) => ({
-          name: r.project,
-          totalDuration: Number(r.total_duration),
-          percentage:
-            totalDuration > 0
-              ? Math.round((Number(r.total_duration) / totalDuration) * 10000) /
-                100
-              : 0,
-        }));
+        const summary = [...projectDurations.entries()]
+          .map(([name, dur]) => ({
+            name,
+            totalDuration: dur,
+            percentage:
+              totalDuration > 0
+                ? Math.round((dur / totalDuration) * 10000) / 100
+                : 0,
+          }))
+          .sort((a, b) => b.totalDuration - a.totalDuration);
 
         return reply.send(summary);
       }

@@ -10,6 +10,22 @@ dist/
 ## Runtime data
 activity.db
 tracker.log
+*.db
+tsc_errors.txt
+tsc_output.txt
+
+## Compiled config artifacts
+vitest.config.js
+vitest.config.js.map
+vitest.config.d.ts
+vitest.config.d.ts.map
+prisma.config.js.map
+prisma.config.d.ts
+prisma.config.d.ts.map
+
+## Temp / debug
+test-tmp/
+.playwright-mcp/
 
 ## Environment variables
 .env

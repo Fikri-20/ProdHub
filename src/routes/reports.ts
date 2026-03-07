@@ -32,23 +32,23 @@ const reportRoutes = async (app: FastifyInstance) => {
 
       if (period === "weekly") {
         const results = await prisma.$queryRaw<
-          Array<{ week_start: Date; total_duration: bigint; event_count: bigint }>
+          Array<{ period_start: string; total_duration: bigint; event_count: bigint }>
         >`
           SELECT
-            DATE_TRUNC('week', ae.start_time) AS week_start,
+            strftime('%Y-%W', ae.start_time) AS period_start,
             COALESCE(SUM(ae.duration), 0) AS total_duration,
-            COUNT(*)::bigint AS event_count
+            COUNT(*) AS event_count
           FROM activity_events ae
           JOIN devices d ON d.id = ae.device_id
           WHERE d.user_id = ${userId}
             AND ae.start_time >= ${effectiveFrom}
             AND ae.start_time <= ${effectiveTo}
-          GROUP BY week_start
-          ORDER BY week_start ASC
+          GROUP BY period_start
+          ORDER BY period_start ASC
         `;
 
         const data = results.map((r) => ({
-          periodStart: r.week_start.toISOString().slice(0, 10),
+          periodStart: r.period_start,
           totalDuration: Number(r.total_duration),
           eventCount: Number(r.event_count),
         }));
@@ -58,23 +58,23 @@ const reportRoutes = async (app: FastifyInstance) => {
 
       // Monthly
       const results = await prisma.$queryRaw<
-        Array<{ month_start: Date; total_duration: bigint; event_count: bigint }>
+        Array<{ period_start: string; total_duration: bigint; event_count: bigint }>
       >`
         SELECT
-          DATE_TRUNC('month', ae.start_time) AS month_start,
+          strftime('%Y-%m', ae.start_time) AS period_start,
           COALESCE(SUM(ae.duration), 0) AS total_duration,
-          COUNT(*)::bigint AS event_count
+          COUNT(*) AS event_count
         FROM activity_events ae
         JOIN devices d ON d.id = ae.device_id
         WHERE d.user_id = ${userId}
           AND ae.start_time >= ${effectiveFrom}
           AND ae.start_time <= ${effectiveTo}
-        GROUP BY month_start
-        ORDER BY month_start ASC
+        GROUP BY period_start
+        ORDER BY period_start ASC
       `;
 
       const data = results.map((r) => ({
-        periodStart: r.month_start.toISOString().slice(0, 10),
+        periodStart: r.period_start,
         totalDuration: Number(r.total_duration),
         eventCount: Number(r.event_count),
       }));

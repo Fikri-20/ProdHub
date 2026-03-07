@@ -12,7 +12,6 @@ const eventRoutes = async (app: FastifyInstance) => {
   // POST /api/events/heartbeat — ingest an activity event
   typedApp.post("/heartbeat", {
     schema: { body: heartbeatBodySchema },
-    config: { rateLimit: { max: 200, timeWindow: "1 minute" } },
   }, async (request, reply) => {
     const { deviceName, os, appName, windowTitle, startTime, endTime, duration } = request.body;
     const userId = request.userId;
@@ -119,7 +118,7 @@ const eventRoutes = async (app: FastifyInstance) => {
   });
 
   // GET /api/events/health — validates API key and returns status
-  app.get("/health", { config: { rateLimit: false } }, async (request, reply) => {
+  app.get("/health", async (request, reply) => {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       return reply.send({ status: "ok", authenticated: false });

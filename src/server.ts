@@ -1,13 +1,13 @@
 import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
-import rateLimit from "@fastify/rate-limit";
 import {
   serializerCompiler,
   validatorCompiler,
   hasZodFastifySchemaValidationErrors,
 } from "fastify-type-provider-zod";
 import prisma from "./lib/prisma.js";
+import { seedDefaultUser } from "./lib/seed-default-user.js";
 import userMiddleware from "./middleware/user.js";
 import eventRoutes from "./routes/events.js";
 import categoryRoutes from "./routes/categories.js";
@@ -18,6 +18,8 @@ import wsRoutes from "./routes/ws.js";
 import exportRoutes from "./routes/export.js";
 import goalRoutes from "./routes/goals.js";
 import reportRoutes from "./routes/reports.js";
+import healthRoutes from "./routes/health.js";
+import setupRoutes from "./routes/setup.js";
 
 const app = Fastify({ logger: true });
 
@@ -76,17 +78,6 @@ app.register(cors, {
 // Register user identification middleware (pre-auth, X-User-Id header)
 app.register(userMiddleware);
 
-// Rate limiting — 100 req/min per user (or per IP for unauthenticated)
-// Registered after userMiddleware with preHandler hook so request.userId is available
-app.register(rateLimit, {
-  max: 100,
-  timeWindow: "1 minute",
-  hook: "preHandler",
-  keyGenerator: (request) => {
-    return request.userId || request.ip;
-  },
-});
-
 // WebSocket support
 app.register(websocket);
 
@@ -100,19 +91,24 @@ app.register(exportRoutes, { prefix: "/api/export" });
 app.register(goalRoutes, { prefix: "/api/goals" });
 app.register(reportRoutes, { prefix: "/api/reports" });
 app.register(wsRoutes, { prefix: "/ws" });
-
-// Disconnect Prisma when the server shuts down
-app.addHook("onClose", async () => {
-  await prisma.$disconnect();
-});
+app.register(healthRoutes);
+app.register(setupRoutes, { prefix: "/api/setup" });
 
 const start = async () => {
   try {
-    // Verify database connection on startup
     await prisma.$connect();
-    app.log.info("Connected to PostgreSQL");
+    app.log.info("Connected to SQLite");
 
-    await app.listen({ port: 3000, host: "0.0.0.0" });
+    // Seed default user and auto-generate API key
+    await seedDefaultUser();
+
+    // Disconnect Prisma when the server shuts down
+    app.addHook("onClose", async () => {
+      await prisma.$disconnect();
+    });
+
+    const port = Number(process.env.PORT) || 3000;
+    await app.listen({ port, host: "0.0.0.0" });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
