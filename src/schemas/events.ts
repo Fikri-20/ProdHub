@@ -12,7 +12,7 @@ export const heartbeatBodySchema = z.object({
   windowTitle: trimmedNonEmpty("windowTitle"),
   startTime: z.coerce.date({ error: "startTime must be a valid ISO date string" }),
   endTime: z.coerce.date({ error: "endTime must be a valid ISO date string" }),
-  duration: z.number().int().positive("duration is required and must be a positive number"),
+  duration: z.number().int().min(0, "duration must be a non-negative integer"),
 });
 
 export const eventsQuerySchema = z.object({

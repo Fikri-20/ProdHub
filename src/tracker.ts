@@ -127,17 +127,28 @@ const timer = setInterval(async () => {
 // ---------------------------------------------------------------------------
 // Graceful shutdown
 // ---------------------------------------------------------------------------
+const SHUTDOWN_TIMEOUT_MS = 5_000;
+
 async function shutdown() {
   clearInterval(timer);
 
   if (sessionStart && currentApp) {
     console.log(`[tracker] Shutting down — flushing final session...`);
-    const ok = await flushSession();
-    if (ok) {
-      console.log(
-        `[tracker] Final session sent: ${currentApp} (${Math.round((Date.now() - sessionStart.getTime()) / 1000)}s)`,
-      );
-    } else {
+    try {
+      const ok = await Promise.race([
+        flushSession(),
+        new Promise<boolean>((resolve) =>
+          setTimeout(() => resolve(false), SHUTDOWN_TIMEOUT_MS),
+        ),
+      ]);
+      if (ok) {
+        console.log(
+          `[tracker] Final session sent: ${currentApp} (${Math.round((Date.now() - sessionStart.getTime()) / 1000)}s)`,
+        );
+      } else {
+        console.error(`[tracker] Failed to send final session (timeout or error).`);
+      }
+    } catch {
       console.error(`[tracker] Failed to send final session.`);
     }
   }

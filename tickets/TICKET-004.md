@@ -1,6 +1,6 @@
 # TICKET-004: Migrate Tracker to POST Heartbeats to API
 
-## Status: `review-failed`
+## Status: `implemented`
 
 ## Priority: P0
 
