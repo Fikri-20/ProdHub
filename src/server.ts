@@ -8,6 +8,13 @@ import {
 } from "fastify-type-provider-zod";
 import prisma from "./lib/prisma.js";
 import { seedDefaultUser } from "./lib/seed-default-user.js";
+import {
+  buildLoggerOptions,
+  genReqId,
+  generateErrorId,
+  getLogLevel,
+  registerProcessErrorHandlers,
+} from "./lib/logger.js";
 import userMiddleware from "./middleware/user.js";
 import eventRoutes from "./routes/events.js";
 import categoryRoutes from "./routes/categories.js";
@@ -21,25 +28,57 @@ import reportRoutes from "./routes/reports.js";
 import healthRoutes from "./routes/health.js";
 import setupRoutes from "./routes/setup.js";
 
-const app = Fastify({ logger: true });
+const app = Fastify({
+  logger: buildLoggerOptions(),
+  genReqId,
+});
+
+// Register process-level error handlers (uncaught exceptions, unhandled rejections)
+registerProcessErrorHandlers(app.log);
 
 // Wire Zod type provider
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-// Custom error handler for Zod validation errors
-app.setErrorHandler(function (error, _request, reply) {
+// Custom error handler with error IDs for 5xx errors
+app.setErrorHandler(function (error, request, reply) {
   if (hasZodFastifySchemaValidationErrors(error)) {
     const firstIssue = error.validation[0]?.params?.issue;
     const message = firstIssue?.message ?? "Validation error";
     return reply.status(400).send({ error: message });
   }
 
-  // Default Fastify error handling
   const err = error as FastifyError;
-  reply.status(err.statusCode ?? 500).send({
+  const statusCode = err.statusCode ?? 500;
+
+  // For 5xx errors, generate an error ID and log with full context
+  if (statusCode >= 500) {
+    const errorId = generateErrorId();
+    request.log.error(
+      {
+        errorId,
+        err,
+        userId: request.userId ?? undefined,
+      },
+      "Server error",
+    );
+    reply.header("X-Request-Id", request.id);
+    return reply.status(statusCode).send({
+      error: "Internal Server Error",
+      errorId,
+    });
+  }
+
+  // For 4xx errors, log at warn level and return the original message
+  request.log.warn({ err }, err.message);
+  reply.status(statusCode).send({
     error: err.message,
   });
+});
+
+// Add X-Request-Id to all responses
+app.addHook("onSend", async (request, reply) => {
+  reply.header("X-Request-Id", request.id);
 });
 
 // CORS — register before auth so preflight OPTIONS requests work
@@ -104,11 +143,19 @@ const start = async () => {
 
     // Disconnect Prisma when the server shuts down
     app.addHook("onClose", async () => {
+      app.log.info("Server shutting down");
       await prisma.$disconnect();
+      app.log.info("Server stopped");
     });
 
     const port = Number(process.env.PORT) || 3000;
+    const environment = process.env.NODE_ENV || "development";
     await app.listen({ port, host: "0.0.0.0" });
+
+    app.log.info(
+      { port, environment, logLevel: getLogLevel() },
+      "Server started",
+    );
   } catch (err) {
     app.log.error(err);
     process.exit(1);
