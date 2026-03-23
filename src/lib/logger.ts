@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
-import type { FastifyBaseLogger, FastifyRequest } from "fastify";
+import type { IncomingMessage } from "node:http";
+import type { FastifyBaseLogger } from "fastify";
 
 const VALID_LOG_LEVELS = [
   "fatal",
@@ -23,7 +24,7 @@ function getLogLevel(): LogLevel {
 /**
  * Generate a request ID: honor incoming X-Request-Id header, or create a new UUID.
  */
-export function genReqId(req: FastifyRequest): string {
+export function genReqId(req: IncomingMessage): string {
   const header = req.headers["x-request-id"];
   const incoming = Array.isArray(header) ? header[0] : header;
   if (incoming && incoming.length > 0 && incoming.length <= 128) {

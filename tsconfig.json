@@ -40,5 +40,16 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "web", "node_modules", "prisma.config.ts", "vitest.config.ts"]
+  "exclude": [
+    "dist",
+    "web",
+    "node_modules",
+    "prisma.config.ts",
+    "vitest.config.ts",
+    "browser-extension",
+    "vscode-extension",
+    "desktop",
+    "src/tests/browser-extension",
+    "src/tests/desktop"
+  ]
 }

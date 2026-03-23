@@ -60,7 +60,6 @@ export async function categorizeEvent(
         eventId,
         categoryId,
       })),
-      skipDuplicates: true,
     });
   }
 }
@@ -123,7 +122,6 @@ export async function recategorizeForCategory(
           eventId,
           categoryId,
         })),
-        skipDuplicates: true,
       });
       assignedCount += matchingEventIds.length;
     }

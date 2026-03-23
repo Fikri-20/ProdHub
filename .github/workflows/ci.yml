@@ -45,7 +45,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Run database migrations
-        run: pnpm db:migrate
+        run: npx prisma migrate deploy
 
       - name: Build backend
         run: pnpm build

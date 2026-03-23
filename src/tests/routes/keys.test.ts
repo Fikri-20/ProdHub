@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import type { FastifyInstance } from "fastify";
 import { buildApp } from "../helpers.js";
 import prisma from "../../lib/prisma.js";
 import { hashApiKey } from "../../lib/api-key.js";
 
 describe("API Key Routes", () => {
-  let app: FastifyInstance;
+  let app: ReturnType<typeof buildApp>;
   let userId: string;
 
   beforeAll(async () => {

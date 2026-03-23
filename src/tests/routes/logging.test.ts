@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
-import Fastify, { type FastifyInstance, type FastifyError } from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import { Writable } from "node:stream";
 import {
   serializerCompiler,
@@ -176,7 +176,7 @@ describe("Structured Logging", () => {
   });
 
   describe("Request Logging", () => {
-    let app: FastifyInstance;
+    let app: ReturnType<typeof buildLoggingApp>;
     let logLines: string[];
 
     beforeAll(async () => {
@@ -255,7 +255,7 @@ describe("Structured Logging", () => {
   });
 
   describe("Error ID in 5xx Responses", () => {
-    let app: FastifyInstance;
+    let app: ReturnType<typeof buildLoggingApp>;
     let logLines: string[];
 
     beforeAll(async () => {
@@ -349,7 +349,8 @@ describe("Structured Logging", () => {
   describe("Serializers", () => {
     it("req serializer extracts method, url, hostname", () => {
       const opts = buildLoggerOptions();
-      const result = opts.serializers.req({
+      const reqSerializer = opts.serializers["req"]!;
+      const result = reqSerializer({
         method: "POST",
         url: "/api/events",
         hostname: "localhost",
@@ -360,12 +361,13 @@ describe("Structured Logging", () => {
       expect(result.url).toBe("/api/events");
       expect(result.hostname).toBe("localhost");
       // Should NOT include headers (only whitelisted fields)
-      expect((result as Record<string, unknown>).headers).toBeUndefined();
+      expect(result.headers).toBeUndefined();
     });
 
     it("res serializer extracts statusCode", () => {
       const opts = buildLoggerOptions();
-      const result = opts.serializers.res({ statusCode: 201 }) as Record<
+      const resSerializer = opts.serializers["res"]!;
+      const result = resSerializer({ statusCode: 201 }) as Record<
         string,
         unknown
       >;
