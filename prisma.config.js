@@ -5,6 +5,6 @@ export default defineConfig({
         path: "prisma/migrations",
     },
     datasource: {
-        url: "file:./prodhub.db",
+        url: "file:./prisma/prodhub.db",
     },
 });
