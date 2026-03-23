@@ -1,6 +1,6 @@
 # TICKET-037: Contributing Docs & Architecture Guide
 
-## Status: `draft`
+## Status: `implemented`
 ## Priority: P2
 
 ## Summary
@@ -29,3 +29,4 @@ Create CONTRIBUTING.md with development setup instructions, code conventions, an
 | Date | From | To | By | Notes |
 |------|------|----|----|-------|
 | 2026-03-23 | — | draft | Claude | Ticket created |
+| 2026-03-23 | draft | implemented | Claude | CONTRIBUTING.md created with all 6 sections: prerequisites, setup, workflow, testing, architecture, conventions |
