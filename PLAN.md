@@ -1,22 +1,21 @@
 # ProdHub — Project Plan
 
-> A privacy-first, cross-platform activity tracker with a GitHub-style heatmap dashboard.
-> Delivered as a **hosted SaaS** — users download a lightweight desktop agent that reports to the cloud API.
-> Built with: **Fastify + PostgreSQL + Prisma + Next.js + Auth.js + Electron + TypeScript**
+> A privacy-first, open-source, cross-platform activity tracker with a GitHub-style heatmap dashboard.
+> **Local-first** — all data lives on your machine in SQLite. No cloud, no account required.
+> Built with: **Fastify + SQLite + Prisma + Next.js + Electron + TypeScript**
 
 ---
 
 ## Tech Stack
 
-| Layer      | Choice               | Why                                                         |
-| ---------- | -------------------- | ----------------------------------------------------------- |
-| Backend    | Fastify (TS)         | Fast, plugin-based, excellent TypeScript support            |
-| Database   | PostgreSQL           | Relational data, time-range queries, multi-tenant ready     |
-| ORM        | Prisma               | Type-safe queries, migrations, introspection                |
-| Frontend   | Next.js (App Router) | SSR landing page + SPA dashboard, Auth.js integration       |
-| Auth       | Auth.js              | OAuth (Google, GitHub) + email/password, session management |
-| Desktop    | Electron             | System tray agent, sends heartbeats to hosted API           |
-| Validation | Zod                  | Runtime + compile-time type safety for API layer            |
+| Layer      | Choice               | Why                                                          |
+| ---------- | -------------------- | ------------------------------------------------------------ |
+| Backend    | Fastify (TS)         | Fast, plugin-based, excellent TypeScript support             |
+| Database   | SQLite               | Zero-config, file-based, data stays on user's machine        |
+| ORM        | Prisma               | Type-safe queries, migrations, introspection                 |
+| Frontend   | Next.js (App Router) | SSR landing page + SPA dashboard                             |
+| Desktop    | Electron             | System tray agent, sends heartbeats to local API             |
+| Validation | Zod                  | Runtime + compile-time type safety for API layer             |
 
 ---
 
@@ -51,12 +50,12 @@ main ← stable releases
 
 ## Phase 2: REST API + Database ✅
 
-**Goal:** Fastify API that reads/writes activity data to PostgreSQL.
+**Goal:** Fastify API that reads/writes activity data to SQLite.
 
 | Ticket     | Task                                                           | Status      |
 | ---------- | -------------------------------------------------------------- | ----------- |
 | —          | 2.1 Fastify server with plugin architecture                    | ✅ Complete |
-| —          | 2.2 PostgreSQL (Docker) + Prisma schema                        | ✅ Complete |
+| —          | 2.2 SQLite + Prisma schema                                    | ✅ Complete |
 | TICKET-001 | 2.3 API endpoints (heartbeat, query, summary, categories CRUD) | ✅ Complete |
 | TICKET-002 | 2.4 Zod validation with fastify-type-provider-zod              | ✅ Complete |
 | TICKET-003 | 2.5 Categorization engine                                      | ✅ Complete |
@@ -69,13 +68,13 @@ main ← stable releases
 - `GET /api/summary?from=&to=&groupBy=app|category` — aggregated summary
 - `CRUD /api/categories` — manage categories and their rules
 
-**Milestone:** Tracker → API → Postgres. `GET /api/summary?groupBy=category` returns aggregated time per category.
+**Milestone:** Tracker → API → SQLite. `GET /api/summary?groupBy=category` returns aggregated time per category.
 
 ---
 
 ## Phase 3: Auth + Multi-Tenancy ✅
 
-**Goal:** Secure the API for multi-user SaaS. All data scoped to authenticated user.
+**Goal:** User model and API key auth. Data scoped to user for multi-device support.
 
 | Ticket     | Task                                                | Status      |
 | ---------- | --------------------------------------------------- | ----------- |
@@ -84,19 +83,19 @@ main ← stable releases
 | TICKET-007 | 3.3 Tenant isolation — all queries scoped to user   | ✅ Complete |
 | TICKET-008 | 3.4 Rate limiting + CORS configuration              | ✅ Complete |
 
-**Why before the dashboard:** Adding auth after building the UI means retrofitting every query, route, and component. Doing it now keeps the codebase clean.
+**Why before the dashboard:** Adding user scoping after building the UI means retrofitting every query, route, and component. Doing it now keeps the codebase clean.
 
-**Milestone:** Two test users can each track activity to the same API without seeing each other's data.
+**Milestone:** Default user auto-created, API key generated, all data scoped to user.
 
 ---
 
 ## Phase 4: Next.js Dashboard ✅
 
-**Goal:** Web dashboard for visualizing activity data, with Auth.js login.
+**Goal:** Web dashboard for visualizing activity data.
 
 | Ticket     | Task                                                                         | Status      |
 | ---------- | ---------------------------------------------------------------------------- | ----------- |
-| TICKET-009 | 4.1 Next.js App Router scaffold + Auth.js (Google, GitHub, email)            | ✅ Complete |
+| TICKET-009 | 4.1 Next.js App Router scaffold                                             | ✅ Complete |
 | TICKET-010 | 4.2 Timeline View — vertical timeline, color-coded by category               | ✅ Complete |
 | TICKET-011 | 4.3 Summary View — pie chart + bar chart with date range picker              | ✅ Complete |
 | TICKET-012 | 4.4 GitHub-style Heatmap — calendar grid, category filter, intensity shading | ✅ Complete |
@@ -104,23 +103,23 @@ main ← stable releases
 | TICKET-014 | 4.6 Live Status indicator — poll every 10s for current activity              | ✅ Complete |
 | TICKET-015 | 4.7 TanStack Query for all data fetching                                     | ✅ Complete |
 
-**Milestone:** Authenticated dashboard showing timeline, summary, heatmap, categories, and live status.
+**Milestone:** Dashboard showing timeline, summary, heatmap, categories, and live status.
 
 ---
 
 ## Phase 5: Desktop Agent (Electron) ✅
 
-**Goal:** Lightweight system tray app that sends heartbeats to the hosted API.
+**Goal:** Lightweight system tray app that sends heartbeats to the local API server.
 
 | Ticket     | Task                                                    | Status      |
 | ---------- | ------------------------------------------------------- | ----------- |
 | TICKET-016 | 5.1 Electron app — system tray only, no embedded server | ✅ Complete |
-| TICKET-017 | 5.2 Heartbeat sender — POST to hosted API via API key   | ✅ Complete |
+| TICKET-017 | 5.2 Heartbeat sender — POST to local API via API key    | ✅ Complete |
 | TICKET-018 | 5.3 Auto-start on OS login                              | ✅ Complete |
 | TICKET-019 | 5.4 Tray menu: pause tracking, open dashboard, settings | ✅ Complete |
 | TICKET-020 | 5.5 Windows installer (macOS/Linux later)               | ✅ Complete |
 
-**Milestone:** Install agent → auto-starts in tray → tracks activity → data appears in web dashboard.
+**Milestone:** Install agent → auto-starts in tray → tracks activity → data appears in local dashboard.
 
 ---
 
@@ -157,18 +156,20 @@ main ← stable releases
 
 ---
 
-## Phase 8: Deployment + SaaS Infrastructure
+## Phase 8: Open-Source Distribution & Polish
 
-**Goal:** Production deployment for real users.
+**Goal:** Make ProdHub easy to install, run, and contribute to as an open-source project.
 
-| Ticket     | Task                                                       | Status  |
-| ---------- | ---------------------------------------------------------- | ------- |
-| TICKET-032 | 8.1 Docker Compose for production (API + Postgres + Redis) | Pending |
-| TICKET-033 | 8.2 CI/CD with GitHub Actions                              | Pending |
-| TICKET-034 | 8.3 Landing page (Next.js SSR)                             | Pending |
-| TICKET-035 | 8.4 Monitoring, logging, error tracking                    | Pending |
+| Ticket     | Task                                                           | Status  |
+| ---------- | -------------------------------------------------------------- | ------- |
+| TICKET-032 | 8.1 Fix CI/CD — GitHub Actions with SQLite (no Postgres/Redis) | Pending |
+| TICKET-033 | 8.2 Cross-platform packaging — macOS + Linux desktop agents    | Pending |
+| TICKET-034 | 8.3 Project landing page — open-source project page            | Pending |
+| TICKET-035 | 8.4 Structured logging — pino JSON logs + error IDs            | Pending |
+| TICKET-036 | 8.5 One-command local setup — easy install and first run       | Pending |
+| TICKET-037 | 8.6 Contributing docs — CONTRIBUTING.md + architecture guide   | Pending |
 
-**Milestone:** Live SaaS — users sign up, download agent, track activity, view dashboard.
+**Milestone:** Clone → install → run → track activity → view dashboard. Easy for users and contributors.
 
 ---
 
@@ -179,16 +180,14 @@ main ← stable releases
 | Language    | TypeScript 5.9 (strict) | ESM-only, `.js` import extensions         |
 | Runtime     | Node.js                 | Long-running process + HTTP server        |
 | Backend     | Fastify 5.x             | Plugin architecture, prefix-based routing |
-| Database    | PostgreSQL 16 (Docker)  | Primary store from Phase 2 onward         |
+| Database    | SQLite (better-sqlite3) | File-based, data stays on user's machine  |
 | ORM         | Prisma 7.x              | Type-safe queries, migrations             |
-| Auth        | Auth.js                 | OAuth + email, session management         |
-| Legacy DB   | SQLite (better-sqlite3) | Phase 1 local storage                     |
 | Build       | tsup                    | ESM bundling                              |
 | Dev         | tsx                     | Watch mode for development                |
 | Package Mgr | pnpm 10.30.1            | Workspace-aware                           |
 | Validation  | Zod                     | Runtime + compile-time safety             |
-| Frontend    | Next.js (App Router)    | SSR + TanStack Query + Auth.js            |
-| Desktop     | Electron                | System tray agent, heartbeats to API      |
+| Frontend    | Next.js (App Router)    | SSR landing page + TanStack Query         |
+| Desktop     | Electron                | System tray agent, heartbeats to local API|
 | Browser Ext | Chrome MV3              | Active tab tracking, domain categorization|
 | Editor Ext  | VS Code Extension       | File/language/project heartbeats          |
 
@@ -198,28 +197,34 @@ main ← stable releases
 
 ## Architecture Decision Records
 
-### ADR-001: SQLite → PostgreSQL Migration (Phase 2)
+### ADR-001: SQLite as Permanent Database
 
-- **Context:** Phase 1 used SQLite for simplicity. Phase 2 needs relational queries, time-range aggregations, and multi-device support.
-- **Decision:** Move to PostgreSQL via Docker with Prisma ORM. SQLite layer kept for backward compatibility during transition.
-- **Status:** Accepted, migration complete.
+- **Context:** Phase 1 used SQLite for simplicity. The project is local-first — all data stays on the user's machine.
+- **Decision:** Keep SQLite as the permanent database via Prisma ORM with `better-sqlite3` adapter. No PostgreSQL, no Docker required.
+- **Status:** Accepted.
 
 ### ADR-002: Next.js over React + Vite (Phase 4)
 
-- **Context:** Original plan used React + Vite for the frontend. As a SaaS product, we need SSR for the landing page, built-in API routes for Auth.js callbacks, and a unified deployment target.
-- **Decision:** Use Next.js with App Router. Auth.js integrates natively. TanStack Query for client-side data fetching.
+- **Context:** Original plan used React + Vite for the frontend. Next.js offers SSR for the landing page and a unified build target.
+- **Decision:** Use Next.js with App Router. TanStack Query for client-side data fetching.
 - **Status:** Accepted.
-  
-### ADR-003: Auth Before Dashboard (Phase 3)
 
-- **Context:** Building the dashboard first would require retrofitting auth into every component and query later.
-- **Decision:** Add auth + multi-tenancy in Phase 3, before the dashboard. All API queries scoped to authenticated user from the start.
+### ADR-003: User Scoping Before Dashboard (Phase 3)
+
+- **Context:** Building the dashboard first would require retrofitting user scoping into every query, route, and component later.
+- **Decision:** Add user model + API key auth in Phase 3, before the dashboard. All API queries scoped to user from the start. Default user auto-created on first run.
 - **Status:** Accepted.
 
 ### ADR-004: Desktop Agent as Thin Client (Phase 5)
 
-- **Context:** Original plan bundled tracker + API + dashboard into a single Electron app. For SaaS, the desktop app should be a lightweight agent.
-- **Decision:** Electron app is system tray only — polls active window, sends heartbeats to hosted API via API key. No embedded server or dashboard.
+- **Context:** Original plan bundled tracker + API + dashboard into a single Electron app.
+- **Decision:** Electron app is system tray only — polls active window, sends heartbeats to local API via API key. Dashboard runs as a separate Next.js process.
+- **Status:** Accepted.
+
+### ADR-005: Local-First, Not SaaS (Phase 8)
+
+- **Context:** Early plans framed ProdHub as a hosted SaaS with PostgreSQL, Redis, Docker Compose, and cloud deployment. The actual vision is open-source and local-first.
+- **Decision:** All data stays on the user's machine in SQLite. No cloud database, no hosted backend. Phase 8 focuses on packaging, CI/CD, and contributor experience instead of cloud infrastructure.
 - **Status:** Accepted.
 
 ---
@@ -259,7 +264,9 @@ main ← stable releases
 | TICKET-029 | 7     | Data export/import         | TICKET-009 |
 | TICKET-030 | 7     | Goals feature              | TICKET-009 |
 | TICKET-031 | 7     | Reports page               | TICKET-011 |
-| TICKET-032 | 8     | Production Docker Compose  | TICKET-008 |
-| TICKET-033 | 8     | CI/CD                      | TICKET-032 |
-| TICKET-034 | 8     | Landing page               | TICKET-009 |
-| TICKET-035 | 8     | Monitoring + logging       | TICKET-032 |
+| TICKET-032 | 8     | Fix CI/CD (SQLite)         | —          |
+| TICKET-033 | 8     | Cross-platform packaging   | TICKET-020 |
+| TICKET-034 | 8     | Project landing page       | TICKET-009 |
+| TICKET-035 | 8     | Structured logging         | —          |
+| TICKET-036 | 8     | One-command setup           | TICKET-032 |
+| TICKET-037 | 8     | Contributing docs          | —          |

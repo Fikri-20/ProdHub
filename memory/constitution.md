@@ -23,23 +23,23 @@
   - Update ticket status to `review-failed` or `approved`.
 - If Codex suggests a fix, it MUST describe it in words in the review report, NEVER as code.
 
-## Tech Stack (auto-detected)
+## Tech Stack
 
 | Layer          | Technology                | Version   |
 |----------------|---------------------------|-----------|
 | Language       | TypeScript (strict, ESM)  | 5.9.3     |
 | Runtime        | Node.js                   | —         |
 | Backend        | Fastify                   | 5.7.4     |
-| Database       | PostgreSQL (Docker)       | 16 Alpine |
+| Database       | SQLite (better-sqlite3)   | —         |
 | ORM            | Prisma                    | 7.4.1     |
-| Legacy DB      | SQLite (better-sqlite3)   | Phase 1   |
 | Build          | tsup                      | 8.5.1     |
 | Dev Runner     | tsx                       | 4.21.0    |
 | Package Mgr    | pnpm                      | 10.30.1   |
-| Validation     | Zod (planned)             | —         |
-| Auth           | Auth.js (planned)         | —         |
-| Frontend       | Next.js App Router (planned) | —      |
-| Desktop        | Electron (planned)        | —         |
+| Validation     | Zod                       | —         |
+| Frontend       | Next.js App Router        | —         |
+| Desktop        | Electron                  | —         |
+| Browser Ext    | Chrome MV3                | —         |
+| Editor Ext     | VS Code Extension         | —         |
 
 ## Code Quality Principles
 1. Tests are mandatory for every feature.

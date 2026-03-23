@@ -1,39 +1,34 @@
-# TICKET-033: CI/CD with GitHub Actions
+# TICKET-033: Cross-Platform Desktop Packaging
 
-## Status
-implemented
+## Status: `draft`
+## Priority: P1
 
-## What
-GitHub Actions workflows for automated testing, building, and Docker image publishing.
+## Summary
+Add macOS (.dmg) and Linux (.AppImage/.deb) builds for the desktop agent. Windows NSIS installer already works via `electron-builder.json` and `scripts/prepare-desktop-installer.mjs`.
 
-## Files Created
-- `.github/workflows/ci.yml` — Run on every PR and push to main/dev
-- `.github/workflows/docker-publish.yml` — Build & push Docker image on release/tag
+> **Note:** This ticket replaces the original TICKET-033 (CI/CD + Docker publish) which was SaaS-oriented.
 
-## CI Workflow (ci.yml)
-1. Trigger: push to main, dev; pull requests to main, dev
-2. Matrix: Node 20
-3. Services: PostgreSQL 16, Redis 7 (GitHub Actions service containers)
-4. Steps:
-   - Checkout code
-   - Setup Node 20 + pnpm (via pnpm/action-setup)
-   - pnpm install --frozen-lockfile
-   - pnpm db:generate (Prisma client)
-   - pnpm build (tsup backend build)
-   - pnpm test (vitest — all tests)
-   - cd web && pnpm install --frozen-lockfile && pnpm build (Next.js build check)
-   - TypeScript check: npx tsc --noEmit (root) + cd web && npx tsc --noEmit
-5. Env vars: DATABASE_URL pointing to service container, REDIS_URL to Redis service
+## Spec Reference
+- Part of Phase 8: Open-Source Distribution & Polish
 
-## Docker Publish Workflow (docker-publish.yml)
-1. Trigger: push tag v* (e.g., v1.0.0)
-2. Steps:
-   - Checkout
-   - Login to GitHub Container Registry (GHCR)
-   - Build Docker image (using existing Dockerfile)
-   - Tag with version + latest
-   - Push to ghcr.io/<owner>/prodhub
+## Requirements
+1. [ ] macOS build target in electron-builder config (.dmg)
+2. [ ] Linux build targets (.AppImage and/or .deb)
+3. [ ] Build scripts in package.json for each platform
+4. [ ] Tray icon assets for macOS (template icon) and Linux
+5. [ ] Test that auto-start works on macOS and Linux
 
-## Verification
-- Push a branch, open a PR → CI workflow runs tests, TypeScript checks, builds
-- Create a tag v0.1.0 → Docker publish workflow builds and pushes image
+## Acceptance Criteria
+- [ ] `pnpm dist:desktop:mac` produces a .dmg installer
+- [ ] `pnpm dist:desktop:linux` produces an .AppImage or .deb
+- [ ] Desktop agent starts in system tray on all 3 platforms
+- [ ] Auto-start on login works on macOS and Linux
+
+## Dependencies
+- Depends on: TICKET-020 (Windows installer — existing)
+- Blocks: None
+
+## Status History
+| Date | From | To | By | Notes |
+|------|------|----|----|-------|
+| 2026-03-23 | — | draft | Claude | Ticket rewritten for cross-platform packaging |

@@ -6,6 +6,7 @@ node_modules/
 
 ## Bundling dir.
 dist/
+release/
 
 ## Runtime data
 activity.db

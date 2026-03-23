@@ -1,10 +1,10 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-**ActivityWatcher (ProdHub)** — a privacy-first, cross-platform activity tracker inspired by ActivityWatch with a GitHub-style heatmap dashboard.
+**ProdHub** — a privacy-first, open-source, local-first activity tracker inspired by ActivityWatch with a GitHub-style heatmap dashboard. All data stays on the user's machine in SQLite.
 
 See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the mentoring/teaching context.
 
@@ -49,7 +49,13 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 7.4 Data export (JSON, CSV) and import — TICKET-029
   - [x] 7.5 Goals feature — daily targets + progress tracking — TICKET-030
   - [x] 7.6 Reports page — weekly/monthly summaries — TICKET-031
-- **Phase 8 (not started):** Deployment + SaaS Infrastructure (TICKET-032 through TICKET-035)
+- **Phase 8 (in progress):** Open-Source Distribution & Polish (TICKET-032 through TICKET-037)
+  - [ ] 8.1 Fix CI/CD — GitHub Actions with SQLite — TICKET-032
+  - [ ] 8.2 Cross-platform desktop packaging (macOS + Linux) — TICKET-033
+  - [ ] 8.3 Project landing page (open-source) — TICKET-034
+  - [ ] 8.4 Structured logging (pino + error IDs) — TICKET-035
+  - [ ] 8.5 One-command local setup — TICKET-036
+  - [ ] 8.6 Contributing docs + architecture guide — TICKET-037
 
 ## Commands
 
@@ -102,7 +108,7 @@ A single long-running Node.js process that polls the active window every 5 secon
 
 ### Database (SQLite + Prisma)
 
-- **`prisma/schema.prisma`** — SQLite database at `prisma/prodhub.db`. Models:
+- **`prisma/schema.prisma`** — SQLite database at `prisma/prodhub.db`. Local-first: all data on user's machine. Models:
   - `User` — users with email, name, optional passwordHash
   - `ApiKey` — API keys for desktop agent auth
   - `Device` — tracked machines (id, name, os)
@@ -151,16 +157,16 @@ A single long-running Node.js process that polls the active window every 5 secon
 
 ## Tech Stack
 
-| Layer      | Choice               | Status      |
-| ---------- | -------------------- | ----------- |
-| Backend    | Fastify (TS)         | Set up      |
-| Database   | SQLite + Prisma      | Set up      |
-| ORM        | Prisma               | Set up      |
-| Frontend   | Next.js (App Router) | Set up      |
-| Desktop    | Electron             | Complete    |
-| Browser    | Chrome MV3 Extension | Complete    |
-| Editor     | VS Code Extension    | Complete    |
-| Validation | Zod                  | Set up      |
+| Layer      | Choice               | Status   |
+| ---------- | -------------------- | -------- |
+| Backend    | Fastify (TS)         | Complete |
+| Database   | SQLite + Prisma      | Complete |
+| ORM        | Prisma               | Complete |
+| Frontend   | Next.js (App Router) | Complete |
+| Desktop    | Electron             | Complete |
+| Browser    | Chrome MV3 Extension | Complete |
+| Editor     | VS Code Extension    | Complete |
+| Validation | Zod                  | Complete |
 
 ---
 

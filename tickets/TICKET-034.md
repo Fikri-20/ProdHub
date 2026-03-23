@@ -1,31 +1,34 @@
-# TICKET-034: Landing Page (Next.js SSR)
+# TICKET-034: Project Landing Page
 
-## Status
-implemented
+## Status: `draft`
+## Priority: P2
 
-## What
-Replace the current redirect-only web/src/app/page.tsx with a public marketing landing page. Authenticated users still redirect to /dashboard.
+## Summary
+Rework the landing page as an open-source project page: what ProdHub does, screenshots, install instructions, link to GitHub. Not a SaaS signup funnel.
 
-## Files Modified
-- `web/src/app/page.tsx` — Rewritten: SSR landing page with hero, features, CTA
+> **Note:** This ticket replaces the original TICKET-034 (SaaS marketing page). Reframed for open-source.
 
-## Landing Page Sections
-1. Hero — Headline, subtitle, "Get Started" CTA button → /auth/signin
-2. Features grid (4 cards):
-   - Cross-platform tracking (Desktop + Browser + Editor)
-   - GitHub-style heatmap visualization
-   - Privacy-first, self-hostable
-   - Real-time dashboard with goals & reports
-3. How It Works — 3-step flow: Sign up → Install agent → View dashboard
-4. Footer — Minimal: GitHub link, copyright
+## Spec Reference
+- Part of Phase 8: Open-Source Distribution & Polish
 
-## Design Approach
-- Server component (SSR) for SEO
-- Check session: if authenticated, redirect to /dashboard; otherwise render landing
-- Dark mode support using existing Tailwind dark classes
-- Responsive (mobile-first)
+## Requirements
+1. [ ] Hero section: tagline, one-line description, "Get Started" links to install instructions
+2. [ ] Features section: cross-platform tracking, heatmap, privacy-first, local SQLite
+3. [ ] Screenshots/demo: dashboard preview, heatmap, timeline
+4. [ ] Install section: quick start commands for each platform
+5. [ ] Footer: GitHub link, license, version
 
-## Verification
-- Visit http://localhost:3001/ unauthenticated → see landing page (not redirect)
-- Visit http://localhost:3001/ authenticated → redirect to /dashboard
-- Mobile responsive check via browser dev tools
+## Acceptance Criteria
+- [ ] Landing page renders at `/` for first-time visitors
+- [ ] Page clearly communicates open-source + local-first + privacy-first
+- [ ] Install instructions are prominent and accurate
+- [ ] Responsive on mobile
+
+## Dependencies
+- Depends on: TICKET-009 (Next.js scaffold)
+- Blocks: None
+
+## Status History
+| Date | From | To | By | Notes |
+|------|------|----|----|-------|
+| 2026-03-23 | — | draft | Claude | Ticket rewritten for open-source project page |
