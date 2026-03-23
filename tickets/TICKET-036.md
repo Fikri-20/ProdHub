@@ -1,6 +1,6 @@
 # TICKET-036: One-Command Local Setup
 
-## Status: `draft`
+## Status: `implemented`
 ## Priority: P1
 
 ## Summary
@@ -31,3 +31,4 @@ Make ProdHub trivially easy to set up. A single command should install dependenc
 | Date | From | To | By | Notes |
 |------|------|----|----|-------|
 | 2026-03-23 | — | draft | Claude | Ticket created |
+| 2026-03-23 | specified | implemented | Claude | All tasks complete: setup.mjs, package.json scripts, seed return type, first-run banner, 13 new tests (231/231 passing) |

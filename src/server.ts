@@ -138,8 +138,10 @@ const start = async () => {
     await prisma.$connect();
     app.log.info("Connected to SQLite");
 
+    const port = Number(process.env.PORT) || 3000;
+
     // Seed default user and auto-generate API key
-    await seedDefaultUser();
+    const { rawKey } = await seedDefaultUser();
 
     // Disconnect Prisma when the server shuts down
     app.addHook("onClose", async () => {
@@ -148,7 +150,6 @@ const start = async () => {
       app.log.info("Server stopped");
     });
 
-    const port = Number(process.env.PORT) || 3000;
     const environment = process.env.NODE_ENV || "development";
     await app.listen({ port, host: "0.0.0.0" });
 
@@ -156,6 +157,24 @@ const start = async () => {
       { port, environment, logLevel: getLogLevel() },
       "Server started",
     );
+
+    // Print first-run banner only when a new key was just created
+    if (rawKey) {
+      const divider = "━".repeat(40);
+      console.log(`\n${divider}`);
+      console.log(`  ProdHub is running!`);
+      console.log(`${divider}`);
+      console.log(`  Dashboard:   http://localhost:3001`);
+      console.log(`  API:         http://localhost:${port}`);
+      console.log(`  API Key:     ${rawKey}`);
+      console.log(``);
+      console.log(`  To connect the desktop agent, set:`);
+      console.log(`    TRACKER_API_URL=http://localhost:${port}`);
+      console.log(`    TRACKER_API_KEY=${rawKey}`);
+      console.log(``);
+      console.log(`  Open your dashboard: http://localhost:3001`);
+      console.log(`${divider}\n`);
+    }
   } catch (err) {
     app.log.error(err);
     process.exit(1);

@@ -7,8 +7,6 @@ import { setDefaultUserId } from "./instance-state.js";
 
 const DEFAULT_EMAIL = "admin@localhost";
 const DEFAULT_NAME = "Admin";
-const SHARED_CONFIG_DIR = path.join(homedir(), ".prodhub");
-const SHARED_CONFIG_PATH = path.join(SHARED_CONFIG_DIR, "agent.json");
 
 /**
  * On server start:
@@ -17,7 +15,12 @@ const SHARED_CONFIG_PATH = path.join(SHARED_CONFIG_DIR, "agent.json");
  * 3. Write ~/.prodhub/agent.json so agents can auto-connect
  * 4. Set the default user ID in instance state
  */
-export async function seedDefaultUser(): Promise<void> {
+export async function seedDefaultUser(): Promise<{ rawKey: string | null }> {
+  // Compute config path at call time so PRODHUB_CONFIG_DIR env var is respected
+  const configDir =
+    process.env["PRODHUB_CONFIG_DIR"] ?? path.join(homedir(), ".prodhub");
+  const configPath = path.join(configDir, "agent.json");
+
   // Upsert default user
   const user = await prisma.user.upsert({
     where: { email: DEFAULT_EMAIL },
@@ -37,10 +40,10 @@ export async function seedDefaultUser(): Promise<void> {
   if (existingKey) {
     // We can't recover the raw key from the hash, so check if agent.json already exists
     // with a key that matches. If not, generate a new one.
-    if (existsSync(SHARED_CONFIG_PATH)) {
+    if (existsSync(configPath)) {
       try {
         const existing = JSON.parse(
-          (await import("node:fs")).readFileSync(SHARED_CONFIG_PATH, "utf8"),
+          (await import("node:fs")).readFileSync(configPath, "utf8"),
         ) as { apiKey?: string };
 
         if (existing.apiKey) {
@@ -51,8 +54,8 @@ export async function seedDefaultUser(): Promise<void> {
 
           if (valid) {
             console.log(`Default user: ${user.email} (${user.id})`);
-            console.log(`Agent config: ${SHARED_CONFIG_PATH}`);
-            return;
+            console.log(`Agent config: ${configPath}`);
+            return { rawKey: null };
           }
         }
       } catch {
@@ -95,14 +98,15 @@ export async function seedDefaultUser(): Promise<void> {
   };
 
   try {
-    if (!existsSync(SHARED_CONFIG_DIR)) {
-      mkdirSync(SHARED_CONFIG_DIR, { recursive: true });
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
     }
-    writeFileSync(SHARED_CONFIG_PATH, JSON.stringify(agentConfig, null, 2));
+    writeFileSync(configPath, JSON.stringify(agentConfig, null, 2));
   } catch (err) {
     console.warn("Could not write agent config:", err);
   }
 
   console.log(`Default user: ${user.email} (${user.id})`);
-  console.log(`API key written to: ${SHARED_CONFIG_PATH}`);
+  console.log(`API key written to: ${configPath}`);
+  return { rawKey };
 }

@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "start:all": "concurrently --names api,web --prefix-colors cyan,magenta \"tsx src/server.ts\" \"pnpm dev:web\"",
     "dev": "tsx --watch src/tracker.ts",
     "dev:server": "tsx --watch src/server.ts",
     "dev:web": "cd web && pnpm dev",
@@ -36,6 +38,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/chrome": "^0.0.300",
     "@types/node": "^25.3.0",
+    "concurrently": "^9.2.1",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
     "prisma": "^7.4.1",
