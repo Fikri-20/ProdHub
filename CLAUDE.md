@@ -49,13 +49,13 @@ See `PLAN.md` for the full phase-by-phase roadmap and `INSTRUCTIONS.md` for the 
   - [x] 7.4 Data export (JSON, CSV) and import — TICKET-029
   - [x] 7.5 Goals feature — daily targets + progress tracking — TICKET-030
   - [x] 7.6 Reports page — weekly/monthly summaries — TICKET-031
-- **Phase 8 (in progress):** Open-Source Distribution & Polish (TICKET-032 through TICKET-037)
-  - [ ] 8.1 Fix CI/CD — GitHub Actions with SQLite — TICKET-032
-  - [ ] 8.2 Cross-platform desktop packaging (macOS + Linux) — TICKET-033
-  - [ ] 8.3 Project landing page (open-source) — TICKET-034
-  - [ ] 8.4 Structured logging (pino + error IDs) — TICKET-035
-  - [ ] 8.5 One-command local setup — TICKET-036
-  - [ ] 8.6 Contributing docs + architecture guide — TICKET-037
+- **Phase 8 (complete):** Open-Source Distribution & Polish (TICKET-032 through TICKET-037)
+  - [x] 8.1 Fix CI/CD — GitHub Actions with SQLite — TICKET-032
+  - [x] 8.2 Cross-platform desktop packaging (macOS + Linux) — TICKET-033
+  - [x] 8.3 Project landing page (open-source) — TICKET-034
+  - [x] 8.4 Structured logging (pino + error IDs) — TICKET-035
+  - [x] 8.5 One-command local setup — TICKET-036
+  - [x] 8.6 Contributing docs + architecture guide — TICKET-037
 
 ## Commands
 
