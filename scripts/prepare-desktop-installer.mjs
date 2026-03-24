@@ -36,7 +36,7 @@ mkdirSync(stagingDir, { recursive: true });
 
 cpSync(desktopBuildPath, stagingMainPath);
 
-// --- Generate a simple 16x16 PNG tray icon ---
+// --- Generate a 512x512 PNG icon (required by electron-builder for macOS/Linux) ---
 function crc32(buf) {
   let c = 0xffffffff;
   for (let i = 0; i < buf.length; i++) {
@@ -109,8 +109,8 @@ function generateIconPng(size) {
   ]);
 }
 
-// Generate and write icon
-const iconPng = generateIconPng(256);
+// Generate and write icon (512x512 for macOS/Linux electron-builder compatibility)
+const iconPng = generateIconPng(512);
 writeFileSync(stagingIconPath, iconPng);
 console.log("[prepare] Generated tray icon at", stagingIconPath);
 

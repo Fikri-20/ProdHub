@@ -30,5 +30,39 @@
     "createDesktopShortcut": false,
     "createStartMenuShortcut": true,
     "shortcutName": "ProdHub Agent"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "icon.png",
+    "artifactName": "ProdHub-Agent-${version}-${arch}.${ext}",
+    "category": "public.app-category.productivity"
+  },
+  "dmg": {
+    "title": "ProdHub Agent",
+    "window": {
+      "width": 540,
+      "height": 380
+    }
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "icon.png",
+    "artifactName": "ProdHub-Agent-${version}-${arch}.${ext}",
+    "category": "Utility",
+    "maintainer": "ProdHub Contributors"
   }
 }

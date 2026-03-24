@@ -15,6 +15,8 @@
     "prepare:desktop:installer": "pnpm build:desktop && node scripts/prepare-desktop-installer.mjs",
     "dist:desktop:dir": "pnpm prepare:desktop:installer && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --win dir",
     "dist:desktop:win": "pnpm prepare:desktop:installer && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --win nsis",
+    "dist:desktop:mac": "pnpm prepare:desktop:installer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --mac dmg",
+    "dist:desktop:linux": "pnpm prepare:desktop:installer && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --projectDir dist/desktop-installer --config ../../electron-builder.json --linux AppImage deb",
     "build:ext": "cd browser-extension && pnpm build",
     "build:vscode": "cd vscode-extension && pnpm build",
     "start": "node dist/tracker.js",
