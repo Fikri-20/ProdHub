@@ -38,6 +38,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Install X11 and native build dependencies
+        run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
+
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
