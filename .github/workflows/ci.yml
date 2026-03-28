@@ -94,16 +94,16 @@ jobs:
 
       # Full install (web is a workspace package — needs root node_modules for tooling)
       - name: Install all dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build Next.js
-        run: cd web && pnpm build
+        run: pnpm exec --filter web next build
 
       - name: Run web tests
-        run: cd web && pnpm test
+        run: pnpm exec --filter web vitest run
 
       - name: TypeScript check (web)
-        run: cd web && npx tsc --noEmit
+        run: pnpm exec --filter web tsc --noEmit
 
   # ─── Browser Extension ────────────────────────────────────────────────────────
   browser-ext:
@@ -142,7 +142,7 @@ jobs:
         run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
 
       - name: Install root dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build browser extension
         run: pnpm build:ext
@@ -187,7 +187,7 @@ jobs:
         run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
 
       - name: Install root dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build VS Code extension
         run: pnpm build:vscode
