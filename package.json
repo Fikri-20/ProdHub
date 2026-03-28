@@ -86,6 +86,7 @@
       "@prisma/engines",
       "better-sqlite3",
       "electron",
+      "esbuild",
       "prisma"
     ],
     "ignoredBuiltDependencies": [
