@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
-import { dirname } from "path";
+import { dirname as getDirname } from "path";
 import { fileURLToPath } from "url";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// This file lives in web/, so __dirname must point to web/ for turbopack to work
+// in CI when we cd into the web directory.
+const __dirname = getDirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/adapter-pg"],

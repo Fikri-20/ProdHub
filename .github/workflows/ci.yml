@@ -78,22 +78,8 @@ jobs:
         with:
           version: 10.30.1
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-        id: pnpm-cache
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      # Full install (web is a workspace package — needs root node_modules for tooling)
-      - name: Install all dependencies
+      # Clean install — skip pnpm store cache to avoid corrupted/partial workspace installs
+      - name: Install dependencies
         run: pnpm install
 
       - name: Build Next.js
@@ -186,8 +172,9 @@ jobs:
       - name: Install X11 and native build dependencies
         run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
 
-      # Install in subdirectory so vscode-extension's own pnpm config (onlyBuiltDependencies: [esbuild]) applies
-      - name: Install VS Code extension dependencies
+      # Clean install — skip pnpm store cache to avoid partial workspace installs
+      # Also install in vscode-extension subdirectory to ensure its node_modules is created
+      - name: Install dependencies
         run: |
           pnpm install
           cd vscode-extension && pnpm install
