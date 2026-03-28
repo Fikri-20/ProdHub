@@ -1,0 +1,54 @@
+name: Bug Report
+description: Report something that isn't working correctly
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        ## Steps to Reproduce
+
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+
+        ## Expected Behavior
+
+        What you expected to happen.
+
+        ## Actual Behavior
+
+        What actually happened.
+
+        ## Environment
+
+        - OS: [e.g. Windows 11, macOS 14, Ubuntu 22.04]
+        - ProdHub version: [e.g. 1.0.0]
+        - Component: [e.g. Desktop Agent, API, Dashboard, Browser Extension, VS Code Extension]
+
+        ## Logs
+
+        Please paste any relevant logs from:
+        - Browser DevTools console
+        - `tracker.log` (if desktop agent)
+        - Browser extension background page console
+        - VS Code extension output channel
+
+        ```text
+        # Paste logs here
+        ```
+
+        ## Additional Context
+
+        Any other context about the problem.
+  - type: checkboxes
+    attributes:
+      label: Prerequisites
+      options:
+        - label: I have searched the existing issues and confirmed this is not a duplicate
+          required: true
+        - label: I am using the latest version of ProdHub
+          required: true

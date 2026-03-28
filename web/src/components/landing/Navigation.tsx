@@ -20,6 +20,7 @@ export function Navigation() {
   const navLinks = [
     { href: "/features", label: "Features" },
     { href: "/how-it-works", label: "How It Works" },
+    { href: "/install", label: "Install" },
     { href: "/docs", label: "Docs", icon: FileText },
     {
       href: "https://github.com/anomaly/prodhub",

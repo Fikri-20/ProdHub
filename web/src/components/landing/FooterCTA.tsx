@@ -43,7 +43,7 @@ export function FooterCTA() {
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <motion.a
-              href="/how-it-works"
+              href="/install"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="group inline-flex items-center gap-3 rounded-xl bg-emerald-600 px-6 py-4 text-base font-semibold text-white shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.5)]"
@@ -101,6 +101,7 @@ export function Footer() {
       links: [
         { label: "Features", href: "/features" },
         { label: "How It Works", href: "/how-it-works" },
+        { label: "Install", href: "/install" },
         { label: "Documentation", href: "/docs" },
       ],
     },

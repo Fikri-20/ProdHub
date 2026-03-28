@@ -1,0 +1,233 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # e.g. v1.0.0, v1.2.3
+
+permissions:
+  contents: write
+
+jobs:
+  # ─── Desktop Agent ───────────────────────────────────────────────────────────
+
+  build-desktop-win:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop agent
+        run: pnpm build:desktop
+
+      - name: Build Windows installer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: pnpm dist:desktop:win
+
+      - name: Upload Windows installer
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: release/desktop-installer/ProdHub-Agent-Setup-${{ github.ref_name }}-x64.exe
+          asset-name: ProdHub-Agent-Setup-${{ github.ref_name }}-x64.exe
+          asset-content-type: application/octet-stream
+
+  build-desktop-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop agent
+        run: pnpm build:desktop
+
+      - name: Build macOS dmg
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: pnpm dist:desktop:mac
+
+      - name: Upload macOS dmg
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: release/desktop-installer/ProdHub-Agent-${{ github.ref_name }}-x64.dmg
+          asset-name: ProdHub-Agent-${{ github.ref_name }}-x64.dmg
+          asset-content-type: application/x-apple-diskimage-utility
+
+  build-desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install system deps
+        run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop agent
+        run: pnpm build:desktop
+
+      - name: Build Linux packages
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: pnpm dist:desktop:linux
+
+      - name: Upload AppImage
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: release/desktop-installer/ProdHub-Agent-${{ github.ref_name }}-x64.AppImage
+          asset-name: ProdHub-Agent-${{ github.ref_name }}-x64.AppImage
+          asset-content-type: application/vnd.appimage
+
+      - name: Upload deb
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: release/desktop-installer/ProdHub-Agent-${{ github.ref_name }}-amd64.deb
+          asset-name: ProdHub-Agent-${{ github.ref_name }}-amd64.deb
+          asset-content-type: application/vnd.debian.binary-package
+
+  # ─── Browser Extension ───────────────────────────────────────────────────────
+
+  build-browser-ext:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build browser extension
+        run: pnpm build:ext
+
+      - name: Upload background.js
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: browser-extension/dist/background.js
+          asset-name: prodhub-browser-extension-${{ github.ref_name }}.zip
+          asset-content-type: application/zip
+
+  # ─── VS Code Extension ───────────────────────────────────────────────────────
+
+  build-vscode-ext:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build VS Code extension
+        run: pnpm build:vscode
+
+      - name: Upload VSIX
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: vscode-extension/dist/prodhub-${{ github.ref_name }}.vsix
+          asset-name: prodhub-vscode-${{ github.ref_name }}.vsix
+          asset-content-type: application/zip
+
+  # ─── Dashboard ───────────────────────────────────────────────────────────────
+
+  build-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.1
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install web dependencies
+        run: pnpm install --frozen-lockfile --filter web
+
+      - name: Build dashboard
+        run: pnpm build --filter web
+
+      - name: Upload dashboard
+        uses: actions/upload-release-asset@v1
+        with:
+          upload-url: ${{ github.event.release.upload_url }}
+          asset-path: web/.next
+          asset-name: prodhub-dashboard-${{ github.ref_name }}.zip
+          asset-content-type: application/zip

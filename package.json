@@ -1,7 +1,15 @@
 {
   "name": "prodhub",
   "version": "1.0.0",
-  "description": "",
+  "description": "A privacy-first, open-source activity tracker with a GitHub-style heatmap dashboard. All data stays on your machine.",
+  "homepage": "https://github.com/anomaly/prodhub",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomaly/prodhub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anomaly/prodhub/issues"
+  },
   "main": "index.js",
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -31,10 +39,19 @@
     "typecheck": "tsc --noEmit",
     "lint": "echo \"No linter configured\""
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "activity-tracker",
+    "time-tracking",
+    "productivity",
+    "privacy",
+    "local-first",
+    "heatmap",
+    "self-hosted",
+    "open-source"
+  ],
+  "author": "ProdHub Contributors",
   "type": "module",
-  "license": "ISC",
+  "license": "MIT",
   "packageManager": "pnpm@10.30.1",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

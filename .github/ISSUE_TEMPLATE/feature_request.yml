@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Summary
+
+        Briefly describe the feature or improvement you'd like to see.
+
+        ## Problem Statement
+
+        What's the pain point? Why is this needed?
+
+        ## Proposed Solution
+
+        How should it work? Any specific ideas for implementation?
+
+        ## Alternatives Considered
+
+        Any alternative approaches you've considered?
+
+        ## Additional Context
+
+        Screenshots, mockups, or other references that would help explain this request.
+  - type: checkboxes
+    attributes:
+      label: Prerequisites
+      options:
+        - label: I have searched the existing issues and confirmed this is not a duplicate
+          required: true
+        - label: I understand this is a local-first, privacy-focused project
+          required: true

@@ -261,7 +261,7 @@ export function HeroSection() {
               className="mt-10 flex flex-col gap-4 sm:flex-row"
             >
               <motion.a
-                href="/how-it-works"
+                href="/install"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="group inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 text-base font-semibold text-white shadow-[0_0_30px_rgba(16,185,129,0.3)] transition-all hover:bg-emerald-500 hover:shadow-[0_0_40px_rgba(16,185,129,0.5)]"
