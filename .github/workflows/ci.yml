@@ -97,13 +97,13 @@ jobs:
         run: pnpm install
 
       - name: Build Next.js
-        run: pnpm exec --filter web next build
+        run: cd web && npx next build
 
       - name: Run web tests
-        run: pnpm exec --filter web vitest run
+        run: cd web && npx vitest run
 
       - name: TypeScript check (web)
-        run: pnpm exec --filter web tsc --noEmit
+        run: cd web && npx tsc --noEmit
 
   # ─── Browser Extension ────────────────────────────────────────────────────────
   browser-ext:
@@ -186,8 +186,11 @@ jobs:
       - name: Install X11 and native build dependencies
         run: sudo apt-get install -y libx11-dev libxtst-dev libpng-dev
 
-      - name: Install root dependencies
-        run: pnpm install
+      # Install in subdirectory so vscode-extension's own pnpm config (onlyBuiltDependencies: [esbuild]) applies
+      - name: Install VS Code extension dependencies
+        run: |
+          pnpm install
+          cd vscode-extension && pnpm install
 
       - name: Build VS Code extension
         run: pnpm build:vscode
